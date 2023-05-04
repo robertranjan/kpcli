@@ -8,7 +8,7 @@
 
 - Install using go install
 
-        go install @latest
+        go install github.com/robertranjan/kpcli@latest
 
     this get installed to ${GOBIN}
 
@@ -23,7 +23,7 @@
     export KDBX_PASSWORD="super_secret"
     export DATABASE_BACKUP="./bkup1/master-db.kdbx"
 
-## createdb
+## create database
 
     bin/kpcli \
         --keyfile ${KDBX_KEYFILE} \
@@ -31,7 +31,7 @@
         --pass ${KDBX_PASSWORD} \
         createdb
 
-## ls
+## list entries
 
     bin/kpcli \
         --keyfile $(KDBX_KEYFILE) \
@@ -39,7 +39,7 @@
         --pass $(KDBX_PASSWORD) \
         ls 
 
-## diff
+## diff 2 databases
 
 example
 
@@ -63,9 +63,8 @@ output
         ( added )  Root/H&R handr block 2022
         ( added )  Root/Income Tax
 
-### diff between kdbx
+### steps
 
-1. Find the previous backup and decrupt to tmp/
-2. List all entries from tmp/{}.kdbx
-3. List all entries from actual/{}.kdbx
-4. Run a diff and show the diffs
+1. List all entries from KDBX_DATABASE.kdbx to ./database1.out
+2. List all entries from DATABASE_BACKUP.kdbx to ./database2.out
+3. Run a diff between ./database1.out and ./database2.out and show the diffs

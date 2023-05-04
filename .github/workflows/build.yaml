@@ -32,24 +32,36 @@ jobs:
       - name: Build
         run: |
           echo "PWD: " $(pwd)
-          echo "env: $(env)"
+          # echo "env: $(env)"
+          ls -altr
+
           export PATH=${PATH}:`go env GOPATH`/bin
           mkdir -p build
           DATESTAMP=$(date +%Y-%m-%d_%H%M%S)
           versionDetail=${DATESTAMP}.$(git rev-parse --short HEAD).$(git rev-list HEAD --count)
           echo "versionDetail: ${versionDetail}"
+          export versionDetail
 
           export GOOS=linux ; \
           export GOARCH=amd64 ; \
-          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" -ldflags "-X main.Version=${versionDetail}" -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" \
+            -ldflags "-X main.Version=${versionDetail}" \
+            -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" \
+            ./cmd/kpcli/
 
           export GOOS=darwin ; \
           export GOARCH=amd64 ; \
-          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" -ldflags "-X main.Version=${versionDetail}" -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" \
+            -ldflags "-X main.Version=${versionDetail}" \
+            -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" \
+            ./cmd/kpcli/
 
           export GOOS=darwin ; \
           export GOARCH=arm64 ; \
-          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" -ldflags "-X main.Version=${versionDetail}" -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" \
+            -ldflags "-X main.Version=${versionDetail}" \
+            -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" \
+            ./cmd/kpcli/
 
           ls -al ./build/
           echo "versionDetail: ${versionDetail}"
