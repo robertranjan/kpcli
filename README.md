@@ -16,38 +16,37 @@
 
         kpcli --version
 
-## setup
+## setup env vars
 
-    export KEYFILE="./tmp/master-db.key"
-    export DATABASE_BACKUP="./tmp/master-db.2023-01-01.kdbx"
-    export DATABASE="./tmp/master-db.kdbx"
-    export MY_DB_PASS="super_secret"
+    export KDBX_KEYFILE="./tmp/master-db.key"
+    export KDBX_DATABASE="./tmp/master-db.kdbx"
+    export KDBX_PASSWORD="super_secret"
+    export DATABASE_BACKUP="./bkup1/master-db.kdbx"
 
 ## createdb
 
-    mkdir ./tmp
-    export TEST_KEYFILE="./tmp/master-db.key"
-    export TEST_DATABASE="./tmp/master-db.kdbx"
-    export TEST_PASS="super_secret"
-
     bin/kpcli \
-        --keyfile ${TEST_KEYFILE} \
-        --database ${TEST_DATABASE} \
-        --pass ${TEST_PASS} \
+        --keyfile ${KDBX_KEYFILE} \
+        --database ${KDBX_DATABASE} \
+        --pass ${KDBX_PASSWORD} \
         createdb
 
 ## ls
 
-    kpcli ls
+    bin/kpcli \
+        --keyfile $(KDBX_KEYFILE) \
+        --database $(KDBX_DATABASE) \
+        --pass $(KDBX_PASSWORD) \
+        ls 
 
 ## diff
 
-example 1
+example
 
-    kpcli \
-        --keyfile ${KEYFILE} \
-        --database ${DATABASE} \
-        --pass ${MY_DB_PASS} \
+    bin/kpcli \
+        --keyfile $(KDBX_KEYFILE) \
+        --database $(KDBX_DATABASE) \
+        --pass $(KDBX_PASSWORD) \
         diff \
             --database2 ${DATABASE_BACKUP}
 
@@ -55,10 +54,10 @@ output
 
         Running diff between
             ${DATABASE_BACKUP} and
-            ${DATABASE}
+            ${KDBX_DATABASE}
 
         here are the diffs:
-        ${DATABASE_BACKUP} to ${DATABASE}
+        ${DATABASE_BACKUP} to ${KDBX_DATABASE}
         ----------------------------------------------------------------------
         (removed)  Root/H&R handr block
         ( added )  Root/H&R handr block 2022

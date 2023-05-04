@@ -8,7 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const BackupDIR = "/tmp/backupDIR"
+const BackupDIR = "/bkup1/"
 
 var Cmd = &cli.Command{
 	Name:  "diff",
@@ -20,16 +20,16 @@ syntax:
 	kpcli \
 		--keyfile <keyfile> \
 		--database <database-filename> \
-		--pass "${PASS}" \
+		--pass "${KDBX_PASSWORD}" \
 		diff \
 			--database2 <database-filename-2>
 			; --database2 - latest file from backup path will be used when it's empty
 
 example:
 	kpcli \
-		--keyfile ${KEYFILE} \
-		--database ${DATABASE} \
-		--pass "${PASS}" \
+		--keyfile ${KDBX_KEYFILE} \
+		--database ${KDBX_PASSWORD} \
+		--pass "${KDBX_PASSWORD}" \
 		diff \
 			--database2 ${DATABASE_BACKUP}
 	`,

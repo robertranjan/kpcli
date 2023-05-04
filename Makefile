@@ -13,9 +13,9 @@ versionDetail=$(DATESTAMP).$(shell git rev-parse --short HEAD).$(shell git rev-l
 DATABASE_BACKUP = ./bkup1/master-db.kdbx
 
 # for kpcli createdb & kpcli ls
-TEST_KEYFILE="./tmp/master-db.key"
-TEST_DATABASE="./tmp/master-db.kdbx"
-TEST_PASS='super_secret'
+KDBX_KEYFILE="./tmp/master-db.key"
+KDBX_DATABASE="./tmp/master-db.kdbx"
+KDBX_PASSWORD='super_secret'
 
 .PHONY: help
 help:
@@ -54,23 +54,23 @@ install:
 createdb: build
 	rm -rf ./tmp && mkdir tmp
 	bin/kpcli \
-		--keyfile $(TEST_KEYFILE) \
-		--database $(TEST_DATABASE) \
-		--pass $(TEST_PASS) \
+		--keyfile $(KDBX_KEYFILE) \
+		--database $(KDBX_DATABASE) \
+		--pass $(KDBX_PASSWORD) \
 		createdb
 
 ls: build
 	bin/kpcli \
-		--keyfile $(TEST_KEYFILE) \
-		--database $(TEST_DATABASE) \
-		--pass $(TEST_PASS) \
+		--keyfile $(KDBX_KEYFILE) \
+		--database $(KDBX_DATABASE) \
+		--pass $(KDBX_PASSWORD) \
 		ls
 
 diff: build
 	bin/kpcli \
-		--keyfile $(TEST_KEYFILE) \
-		--database $(TEST_DATABASE) \
-		--pass $(TEST_PASS) \
+		--keyfile $(KDBX_KEYFILE) \
+		--database $(KDBX_DATABASE) \
+		--pass $(KDBX_PASSWORD) \
 		diff \
 			--database2 ${DATABASE_BACKUP}
 
@@ -85,10 +85,10 @@ local-test:
 	./kpcli -p  "Super_Secret" -k tmp/test.key --db tmp/test.kdbx createdb || true
 
 	$(call banner, "List entries sorted by creation time")
-	@./kpcli -k ${KEYFILE} --dbfile ${KDBX_DATABASE} --pass '${PASSWORD}' ls -c -d 30
+	@./kpcli -k ${KDBX_KEYFILE} --dbfile ${KDBX_DATABASE} --pass '${PASSWORD}' ls -c -d 30
 
 	$(call banner, "List entries sorted by modification time")
-	@./kpcli -k ${KEYFILE}  --dbfile ${KDBX_DATABASE} --pass '${PASSWORD}' ls -m -d 3
+	@./kpcli -k ${KDBX_KEYFILE}  --dbfile ${KDBX_DATABASE} --pass '${PASSWORD}' ls -m -d 3
 
 	$(call banner, "List all fields")
-	@./kpcli -k ${KEYFILE} --dbfile ${KDBX_DATABASE} --pass "${PASSWORD}" ls -s t -f all -d 3
+	@./kpcli -k ${KDBX_KEYFILE} --dbfile ${KDBX_DATABASE} --pass "${PASSWORD}" ls -s t -f all -d 3

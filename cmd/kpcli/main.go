@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/robertranjan/kpcli/cmds/createdb"
@@ -16,29 +16,28 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "kpcli"
 	app.Usage = "kpcli ls --help"
-	// NOTE: get version using below commands
+	// NOTE: setting version using below commands
 	// 		git rev-parse --short HEAD
 	// 		git rev-list HEAD --count
-	// app.Version = "2023Feb19.f774b64.1054"
+	// app.Version = "2023Feb19.f774b64.10"
 	app.Version = Version
-	// app.Version = versioninfo.Branch
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
 			Name:    "debug",
 			Usage:   "enable debug log level",
-			EnvVars: []string{"DEBUG"},
+			EnvVars: []string{"KDBX_DEBUG"},
 		},
 		&cli.StringFlag{
 			Name:    "log-dir",
-			Usage:   "location on disk to write logs too, optional",
-			EnvVars: []string{"LOG_DIR"},
+			Usage:   "location on disk to write logs (optional)",
+			EnvVars: []string{"KDBX_LOG_DIR"},
 		},
 		&cli.StringFlag{
 			Name:    "keyfile",
 			Usage:   "fullpath of keyfile",
 			Aliases: []string{"kf", "k"},
-			EnvVars: []string{"KEYFILE"},
+			EnvVars: []string{"KDBX_KEYFILE"},
 		},
 		&cli.StringFlag{
 			Name:    "database",
@@ -50,7 +49,7 @@ func main() {
 			Name:    "pass",
 			Usage:   "kdbx pass",
 			Aliases: []string{"p"},
-			EnvVars: []string{"PASSWORD"},
+			EnvVars: []string{"KDBX_PASSWORD"},
 		},
 	}
 	app.Commands = []*cli.Command{
@@ -60,6 +59,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Panic(err)
+		fmt.Printf("   sorry, failed to serve your request: \n\t%v\n", err)
+		os.Exit(1)
 	}
 }
