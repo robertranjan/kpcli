@@ -7,3 +7,5 @@ tmp/
 database1.out
 database2.out
 diffLog2Email.html
+build/
+local/

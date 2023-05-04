@@ -1,0 +1,73 @@
+name: Build and Publish
+
+on: [push]
+
+jobs:
+  build-publish:
+    name: Build, Test and Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Restore Cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: ~/go/pkg
+          key: 1.19-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+
+      - name: Build
+        run: |
+          echo "PWD: " $(pwd)
+          echo "env: $(env)"
+          export PATH=${PATH}:`go env GOPATH`/bin
+          mkdir -p build
+          DATESTAMP=$(date +%Y-%m-%d_%H%M%S)
+          versionDetail=${DATESTAMP}.$(git rev-parse --short HEAD).$(git rev-list HEAD --count)
+          echo "versionDetail: ${versionDetail}"
+
+          export GOOS=linux ; \
+          export GOARCH=amd64 ; \
+          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" -ldflags "-X main.Version=${versionDetail}" -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+
+          export GOOS=darwin ; \
+          export GOARCH=amd64 ; \
+          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" -ldflags "-X main.Version=${versionDetail}" -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+
+          export GOOS=darwin ; \
+          export GOARCH=arm64 ; \
+          go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" -ldflags "-X main.Version=${versionDetail}" -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+
+          ls -al ./build/
+          echo "versionDetail: ${versionDetail}"
+
+      - uses: actions/upload-artifact@v3
+        name: Publish
+        with:
+          name: kpcli-darwin-amd64.zip
+          path: build/kpcli-darwin-amd64.bin
+
+      - uses: actions/upload-artifact@v3
+        name: Publish
+        with:
+          name: kpcli-darwin-arm.zip
+          path: build/kpcli-darwin-arm64.bin
+
+      - uses: actions/upload-artifact@v3
+        name: Publish
+        with:
+          name: kpcli-linux-amd64.zip
+          path: build/kpcli-linux-amd64.bin

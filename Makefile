@@ -37,8 +37,16 @@ all: build fix-link
 .PHONY: build
 build:
 	$(call banner, $@)
-	go build \
-		-o bin/kpcli \
+	GOOS=darwin GOARCH=arm64 go build \
+		-o bin/kpclidarwin-arm64.bin \
+		-ldflags "-X main.Version=$(versionDetail)" \
+		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+	GOOS=darwin GOARCH=amd64 go build \
+		-o bin/kpcli-darwin-amd64.bin \
+		-ldflags "-X main.Version=$(versionDetail)" \
+		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+	GOOS=linux GOARCH=amd64 go build \
+		-o bin/kpcli-linux-amd64.bin \
 		-ldflags "-X main.Version=$(versionDetail)" \
 		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
 
