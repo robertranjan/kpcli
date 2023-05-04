@@ -1,0 +1,9 @@
+.envrc*
+.vscode/
+bin/kpcli
+*.password
+tmp/
+.DS_Store
+database1.out
+database2.out
+diffLog2Email.html
