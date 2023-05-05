@@ -213,7 +213,7 @@ func (d *db) show() {
 	if d.Options.Quite {
 		return
 	}
-	fmt.Printf("\n\n%sThis command used: \n\tkeyfile: %s\n\tdatabase: %s\n",
+	fmt.Printf("%sThis command used: \n\tkeyfile: %s\n\tdatabase: %s\n",
 		colorGreen, d.Options.Key, d.Options.Database)
 	fmt.Printf("\nShowing %v of %v total entries%s\n",
 		len(d.SelectedEntries), len(d.Entries), colorReset)

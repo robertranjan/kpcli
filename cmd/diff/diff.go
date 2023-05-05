@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/robertranjan/kpcli/cmds/ls"
+	"github.com/robertranjan/kpcli/cmd/ls"
 )
 
 // NewDiff returns a *Diff

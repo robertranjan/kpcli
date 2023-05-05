@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertranjan/kpcli/cmds/createdb"
-	"github.com/robertranjan/kpcli/cmds/diff"
-	"github.com/robertranjan/kpcli/cmds/ls"
+	"github.com/robertranjan/kpcli/cmd/createdb"
+	"github.com/robertranjan/kpcli/cmd/diff"
+	"github.com/robertranjan/kpcli/cmd/ls"
 	"github.com/urfave/cli/v2"
 )
 

@@ -1,6 +1,6 @@
 package diff
 
-import "github.com/robertranjan/kpcli/cmds/ls"
+import "github.com/robertranjan/kpcli/cmd/ls"
 
 type Options struct {
 	Database       string

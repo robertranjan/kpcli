@@ -48,16 +48,16 @@ build:
 	GOOS=darwin GOARCH=amd64 go build \
 		-o bin/kpcli-darwin-amd64.bin \
 		-ldflags "-X main.Version=$(versionDetail)" \
-		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+		-trimpath "github.com/robertranjan/kpcli" .
 	cp bin/kpcli-darwin-amd64.bin $(BIN)
 #	GOOS=darwin GOARCH=arm64 go build \
 #		-o bin/kpclidarwin-arm64.bin \
 #		-ldflags "-X main.Version=$(versionDetail)" \
-#		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+#		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" .
 #	GOOS=linux GOARCH=amd64 go build \
 #		-o bin/kpcli-linux-amd64.bin \
 #		-ldflags "-X main.Version=$(versionDetail)" \
-#		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" ./cmd/kpcli/
+#		-trimpath "github.com/robertranjan/kpcli/cmd/kpcli" .
 
 run: build
 	$(call banner, $@)

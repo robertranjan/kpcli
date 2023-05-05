@@ -46,22 +46,22 @@ jobs:
           export GOARCH=amd64 ; \
           go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" \
             -ldflags "-X main.Version=${versionDetail}" \
-            -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" \
-            ./cmd/kpcli/
+            -trimpath "github.com/robertranjan/kpcli" \
+            .
 
           export GOOS=darwin ; \
           export GOARCH=amd64 ; \
           go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" \
             -ldflags "-X main.Version=${versionDetail}" \
-            -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" \
-            ./cmd/kpcli/
+            -trimpath "github.com/robertranjan/kpcli" \
+            .
 
           export GOOS=darwin ; \
           export GOARCH=arm64 ; \
           go build -o "./build/kpcli-${GOOS}-${GOARCH}.bin" \
             -ldflags "-X main.Version=${versionDetail}" \
-            -trimpath "github.com/robertranjan/kpcli/cmd/kpcli" \
-            ./cmd/kpcli/
+            -trimpath "github.com/robertranjan/kpcli" \
+            .
 
           ls -al ./build/
           echo "versionDetail: ${versionDetail}"
