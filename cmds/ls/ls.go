@@ -219,7 +219,9 @@ func (d *db) show() {
 		len(d.SelectedEntries), len(d.Entries), colorReset)
 }
 
-func (d *db) Run() error {
+// List show the entries from a kdbx database
+// You may call it to save the listing to file by specifying right options
+func (d *db) List() error {
 	d.loadEntries()
 	d.show()
 	// fmt.Printf("option: %#v\n", d.Options)

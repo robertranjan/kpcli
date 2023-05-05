@@ -1,7 +1,6 @@
 package diff
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,6 +14,7 @@ import (
 	"github.com/robertranjan/kpcli/cmds/ls"
 )
 
+// NewDiff returns a *Diff
 func NewDiff(opts Options) *Diff {
 	var fromDBOpts = ls.Options{
 		Reverse:      true,
@@ -77,36 +77,36 @@ func getRecentFile(dir string, filename string) string {
 	return filepath.Join(dir, recentFile)
 }
 
-func (d *Diff) Run() error {
+// Diff shows the difference between 2 databases
+// notify option can be used to notify your email id (work only for gmail at the moment)
+func (d *Diff) Diff() error {
+
+	// list entries from recent backup
+	dbOne, err := ls.NewDB(*d.FromDBOption)
+	if err != nil {
+		return err
+	}
+	err = dbOne.List()
+	if err != nil {
+		return err
+	}
+
 	// list current db entries
-	lsCurDB, err := ls.NewDB(*d.ToDBOption)
+	dbTwo, err := ls.NewDB(*d.ToDBOption)
 	if err != nil {
 		return err
 	}
-	var errMsg string
-	err = lsCurDB.Run()
-	if err != nil {
-		errMsg = err.Error()
-	}
 
-	// list recent backedup db entries
-	lsOldDB, err := ls.NewDB(*d.FromDBOption)
+	err = dbTwo.List()
 	if err != nil {
 		return err
 	}
-	err = lsOldDB.Run()
-	if err != nil {
-		errMsg += err.Error()
-	}
 
-	outputHeader := []byte(fmt.Sprintf("Running diff between \n\t%v and \n\t%v\n", d.options.Database2, d.options.Database))
-	outputHeader = append(outputHeader, []byte("\nhere are the diffs:\n")...)
+	outputHeader := []byte(fmt.Sprintf("here are the diffs between %v and %v\n",
+		d.options.Database2, d.options.Database))
 	cmd := exec.Command("diff", []string{"database2.out", "database1.out"}...)
-	moreHeader := []byte(fmt.Sprintf(" %s to %v\n %s\n",
-		filepath.Base(d.options.Database2), filepath.Base(d.options.Database),
-		strings.Repeat("-", 70)),
-	)
-	outputHeader = append(outputHeader, moreHeader...)
+	outputHeader = append(outputHeader, []byte(strings.Repeat("-", 70))...)
+	outputHeader = append(outputHeader, []byte("\n")...)
 	out, _ := cmd.CombinedOutput()
 	if string(out) == "" {
 		out = []byte("\tNo differneces")
@@ -124,9 +124,12 @@ func (d *Diff) Run() error {
 			ansiLine = strings.Replace(ansiLine, ">", "\033[32m ( added ) \033[0m", -1)
 			ANSILines = append(ANSILines, ansiLine)
 
-			// color code output for html email 'from above var: ansiLine' to avoid repl issues with html tags[< & >]
-			htmlLine = strings.Replace(ansiLine, "\033[31m (removed) \033[0m", "<font color=red> (removed) </font>", -1)
-			htmlLine = strings.Replace(htmlLine, "\033[32m ( added ) \033[0m", "<font color=green> (added) </font>", -1)
+			// color code output for html email 'from above var: ansiLine'
+			//   to avoid repl issues with html tags[< & >]
+			htmlLine = strings.Replace(ansiLine, "\033[31m (removed) \033[0m",
+				"<font color=red> (removed) </font>", -1)
+			htmlLine = strings.Replace(htmlLine, "\033[32m ( added ) \033[0m",
+				"<font color=green> (added) </font>", -1)
 			HTMLLines = append(HTMLLines, htmlLine)
 		}
 	}
@@ -143,11 +146,9 @@ func (d *Diff) Run() error {
 	if d.options.Notify && len(ANSILines) > 0 {
 		d.Notify(d.options.OutputFilename)
 	} else {
-		color.Yellow("\n  >>> Not sending any emails. Either no change or notifications wasn't requested.\n")
+		color.Yellow("\n  >>> Not sending any emails. " +
+			"Either no change or notifications wasn't requested.\n")
 	}
 
-	if errMsg != "" {
-		return errors.New(errMsg)
-	}
 	return nil
 }

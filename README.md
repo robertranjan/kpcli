@@ -10,7 +10,7 @@
 
         go install github.com/robertranjan/kpcli@latest
 
-    this get installed to ${GOBIN}
+    this will install the tool at ${GOBIN} dir(usually ~/go/bin)
 
 - Usage
 
@@ -39,7 +39,7 @@
         --pass $(KDBX_PASSWORD) \
         ls 
 
-## diff 2 databases
+## diff databases
 
 example
 
@@ -57,7 +57,7 @@ output
             ${KDBX_DATABASE}
 
         here are the diffs:
-        ${DATABASE_BACKUP} to ${KDBX_DATABASE}
+        ./bkup1/master-db.kdbx to ./tmp/master-db.kdbx
         ----------------------------------------------------------------------
         (removed)  Root/H&R handr block
         ( added )  Root/H&R handr block 2022
@@ -65,6 +65,6 @@ output
 
 ### steps
 
-1. List all entries from KDBX_DATABASE.kdbx to ./database1.out
-2. List all entries from DATABASE_BACKUP.kdbx to ./database2.out
-3. Run a diff between ./database1.out and ./database2.out and show the diffs
+1. List all entries from ${KDBX_DATABASE} to ./database1.out
+2. List all entries from ${DATABASE_BACKUP} to ./database2.out
+3. Run a diff between ./database1.out and ./database2.out

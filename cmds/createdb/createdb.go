@@ -20,12 +20,21 @@ var (
 )
 
 func mkValue(key string, value string) gokeepasslib.ValueData {
-	return gokeepasslib.ValueData{Key: key, Value: gokeepasslib.V{Content: value}}
+	return gokeepasslib.ValueData{
+		Key: key,
+		Value: gokeepasslib.V{
+			Content:   value,
+			Protected: w.NewBoolWrapper(false),
+		},
+	}
 }
 func mkProtectedValue(key string, value string) gokeepasslib.ValueData {
 	return gokeepasslib.ValueData{
-		Key:   key,
-		Value: gokeepasslib.V{Content: value, Protected: w.NewBoolWrapper(true)},
+		Key: key,
+		Value: gokeepasslib.V{
+			Content:   value,
+			Protected: w.NewBoolWrapper(true),
+		},
 	}
 }
 
@@ -106,21 +115,30 @@ func (d *db) createWithSampleEntries() error {
 	return nil
 }
 
-func (d *db) Run() error {
-
+// NewDB creates and returns a new kdbx database
+func NewDB(opt Options) (*db, error) {
+	d := &db{
+		Options: &opt,
+	}
 	// return if database already exist
 	if _, err := os.Stat(d.Options.Database); !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("%s %s already exist, won't OVERWRITE%s", colorRed, d.Options.Database, colorReset)
+		return nil, fmt.Errorf("%s %s already exist, won't OVERWRITE%s",
+			colorRed, d.Options.Database, colorReset)
 	}
 
 	// return if keyfile already exist
 	if _, err := os.Stat(d.Options.Key); !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("%sfile: %s already exist, won't OVERWRITE\n%s", colorRed, d.Options.Key, colorReset)
+		return nil, fmt.Errorf("%sfile: %s already exist, won't OVERWRITE\n%s",
+			colorRed, d.Options.Key, colorReset)
 	}
+	// create db with some sample entries
+	d.createWithSampleEntries()
+
 	// write the password to file: {database}.password
 	passFile := strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".password"
 	if _, err := os.Stat(passFile); !errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("%sWill overwrite password file: %s\n%s", colorGreen, passFile, colorReset)
+		fmt.Printf("%sWill overwrite password file: %s\n%s",
+			colorGreen, passFile, colorReset)
 	}
-	return d.createWithSampleEntries()
+	return d, nil
 }

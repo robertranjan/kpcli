@@ -8,13 +8,14 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const BackupDIR = "/bkup1/"
+// BackupDIR is where the backup databases are
+const BackupDIR = "./bkup1/"
 
 var Cmd = &cli.Command{
-	Name:  "diff",
-	Usage: "diff entries from 2 kdbx files",
-	Description: `
-Difference between 2 kdbx databases
+	Name:    "diff",
+	Usage:   "diff entries between 2 kdbx databases",
+	Aliases: []string{"d"},
+	Description: `Show difference between 2 kdbx databases
 
 syntax:
 	kpcli \
@@ -23,7 +24,6 @@ syntax:
 		--pass "${KDBX_PASSWORD}" \
 		diff \
 			--database2 <database-filename-2>
-			; --database2 - latest file from backup path will be used when it's empty
 
 example:
 	kpcli \
@@ -83,5 +83,5 @@ func cmd(app *cli.Context) error {
 			opts.Database, opts.Database2, opts.Key, pattern)
 	}
 	diff := NewDiff(opts)
-	return diff.Run()
+	return diff.Diff()
 }

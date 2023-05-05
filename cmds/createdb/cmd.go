@@ -15,30 +15,28 @@ type db struct {
 }
 
 var Cmd = &cli.Command{
-	Name:  "createdb",
-	Usage: "Create a new kdbx databse",
-	Description: `
-	To list entries
+	Name:    "createdb",
+	Usage:   "Create a new kdbx databse",
+	Aliases: []string{"c"},
+	Description: `createdb command create a new kdbx database with few sample entries
 
+syntax:
 	kpcli \
 		--keyfile <keyfile> \
 		--name <xyx.kdbx> \
 		--pass {password to encrypt/open kdbx} \
 		createdb
 
-	Example:
-
-		kpcli \
-			--keyfile ./tmp/master-db.key \
-			--pass 'super_secret' \
-			--db ./tmp/master-db.kdbx \
-			createdb
+Example:
+	kpcli \
+		--keyfile ./tmp/master-db.key \
+		--pass 'super_secret' \
+		--db ./tmp/master-db.kdbx \
+		createdb
 	`,
 
 	Action: runCreate,
-	Flags:  []cli.Flag{
-		// not using this sort stringFlag option, yet
-	},
+	Flags:  []cli.Flag{},
 }
 
 func runCreate(app *cli.Context) error {
@@ -48,9 +46,10 @@ func runCreate(app *cli.Context) error {
 		Pass:     app.String("pass"),
 		Key:      app.String("keyfile"),
 	}
-	db := &db{
-		Options: &opts,
+	_, err := NewDB(opts)
+	if err != nil {
+		return err
 	}
 
-	return db.Run()
+	return nil
 }

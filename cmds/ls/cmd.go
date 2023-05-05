@@ -7,41 +7,32 @@ import (
 )
 
 var Cmd = &cli.Command{
-	Name:  "ls",
-	Usage: "lists entries",
-	Description: `
-	List all entries from a .kdbx database
+	Name:    "ls",
+	Usage:   "lists entries",
+	Aliases: []string{"l"},
+	Description: `List all entries from a .kdbx database
 
-	Usage
-
+syntax:
 	./kpcli --keyfile <keyfile> \
 			--database <database-filename> \
-			[--cachefile <cachefile name>] \
 		ls  [--reverse] [--days 10] [--sort-by-col 1|2|3|4]
 			; --reverse -> reverse order
-			; --sort-by-col 1 -> title | 2 -> history count | 3 -> creation time | 4 -> mod time
+			; --sort-by-col N
+				1 -> title
+				2 -> history count
+				3 -> creation time
+				4 -> mod time
 			; --days 10 --> shows entries created or modified in the last 10 days
 
-		┌─────┬────────────────────────────┬───────────┬─────────────────────┬─────────────────────┐
-		|     | 	     (COL: 1)          |  (COL: 2) |        (COL: 3)     |       (COL: 4)      |
-		├─────┬────────────────────────────┬───────────┬─────────────────────┬─────────────────────┤
-		│     │ TITLE                      │ HISTORIES │ CREATED             │ MODIFIED            │
-		├─────┼────────────────────────────┼───────────┼─────────────────────┼─────────────────────┤
-		│   1 │ Root/TestEntry             │ 1         │ 2018-02-20 22:58:02 │ 2018-02-21 11:42:45 │
-		│   2 │ Recycle Bin/testentry2     │ 7         │ 2018-03-25 18:52:47 │ 2018-03-25 22:24:48 │
-		└─────┴────────────────────────────┴───────────┴─────────────────────┴─────────────────────┘
-
-	Example:
+Example:
 		kpcli ls --sortby-col 4 -d 2
 			; shows entries modified in last 2 days ORDER by col 4(modified time)
 
 		kpcli \
-		--keyfile ./tmp/master-db.key \
-		--pass 'super_secret' \
-		--db ./tmp/master-db.kdbx \
-		ls
-
-
+			--keyfile ./tmp/master-db.key \
+			--pass 'super_secret' \
+			--db ./tmp/master-db.kdbx \
+			ls
 	`,
 
 	Action: runLs,
@@ -65,11 +56,6 @@ var Cmd = &cli.Command{
 			Name:    "cachefile",
 			Usage:   "cache result",
 			Aliases: []string{"ca"},
-		},
-		&cli.BoolFlag{
-			Name:    "diff",
-			Usage:   "diff against cache",
-			Aliases: []string{"di"},
 		},
 		&cli.StringFlag{
 			Name:    "days",
@@ -101,7 +87,6 @@ func runLs(app *cli.Context) error {
 		Fields:       app.String("fields"),
 		SortbyCol:    app.Int("sortby-col"),
 		CacheFile:    app.String("cachefile"),
-		Diff:         app.Bool("diff"),
 		Quite:        app.Bool("quite"),
 		OutputFormat: app.String("output-format"),
 	}
@@ -115,10 +100,10 @@ func runLs(app *cli.Context) error {
 			opts.Database, opts.Key)
 	}
 
-	ls, err := NewDB(opts)
+	db, err := NewDB(opts)
 	if err != nil {
 		return err
 	}
 
-	return ls.Run()
+	return db.List()
 }

@@ -9,3 +9,5 @@ database2.out
 diffLog2Email.html
 build/
 local/
+*.log
+bin/
