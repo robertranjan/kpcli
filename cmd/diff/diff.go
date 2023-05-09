@@ -109,7 +109,7 @@ func (d *Diff) Diff() error {
 	outputHeader = append(outputHeader, []byte("\n")...)
 	out, _ := cmd.CombinedOutput()
 	if string(out) == "" {
-		out = []byte("\tNo differneces")
+		out = []byte("\tNo differences")
 	}
 	outputLines := strings.Split(string(out), "\n")
 	sort.Strings(outputLines)

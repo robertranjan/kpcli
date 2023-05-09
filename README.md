@@ -1,4 +1,8 @@
-# build and install
+# kpcli
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/robertranjan/kpcli)](https://goreportcard.com/report/github.com/robertranjan/kpcli)
+
+## build and install
 
 - clone and install
 
