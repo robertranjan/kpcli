@@ -23,10 +23,11 @@ func NewDiff(opts Options) *Diff {
 		Database:     opts.Database2,
 		Key:          opts.Key,
 		Fields:       "few",
-		CacheFile:    "database2.out",
 		Quite:        true,
-		Diff:         true,
 		OutputFormat: opts.OutputFormat,
+		// options for diff cmd
+		CacheFile:   "database2.out",
+		DiffCalling: true,
 	}
 	var toDBOpts = ls.Options{
 		Reverse:      true,
@@ -35,10 +36,11 @@ func NewDiff(opts Options) *Diff {
 		Database:     opts.Database,
 		Key:          opts.Key,
 		Fields:       "few",
-		CacheFile:    "database1.out",
 		Quite:        true,
-		Diff:         true,
 		OutputFormat: opts.OutputFormat,
+		// options for diff cmd
+		CacheFile:   "database1.out",
+		DiffCalling: true,
 	}
 
 	return &Diff{
@@ -146,8 +148,8 @@ func (d *Diff) Diff() error {
 	if d.options.Notify && len(ANSILines) > 0 {
 		d.Notify(d.options.OutputFilename)
 	} else {
-		color.Yellow("\n  >>> Not sending any emails. " +
-			"Either no change or notifications wasn't requested.\n")
+		color.Yellow("\n  >>> Not sending any emails " +
+			"as there is no changes or notification wasn't requested.\n")
 	}
 
 	return nil

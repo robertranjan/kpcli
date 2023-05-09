@@ -71,7 +71,8 @@ func (d *db) loadEntries() {
 	db.Credentials = cred
 
 	if err := gokeepasslib.NewDecoder(file).Decode(db); err != nil {
-		log.Fatalf("failed to decode db: %#v, err: %v", db, err)
+		log.Fatalf("failed to decode dbfile: %#v, err: %v",
+			d.Options.Database, err)
 	}
 
 	if err := db.UnlockProtectedEntries(); err != nil {
@@ -86,9 +87,9 @@ func (d *db) loadEntries() {
 	}
 }
 
-func (d *db) updateSelectedEntries() {
+func (d *db) updateTableWithSelectedEntries(t table.Writer) table.Writer {
 	if d.Options.Days == 0 {
-		return
+		return nil
 	}
 	var newSelItems []Interested
 	for _, ent := range d.SelectedEntries {
@@ -98,28 +99,7 @@ func (d *db) updateSelectedEntries() {
 		}
 	}
 	d.SelectedEntries = newSelItems
-}
 
-func (d *db) getTableHeader() table.Writer {
-	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
-
-	switch d.Options.Fields {
-	// header row
-	case "all":
-		t.AppendHeader(table.Row{"Title (col #1)", "Histories", "Created", "Modified", "Notes"})
-	case "few":
-		t.AppendHeader(table.Row{"Title (col #1)"})
-	default:
-		t.AppendHeader(table.Row{"Title (col #1)", "Histories", "Created", "Modified"})
-	}
-	return t
-}
-
-func (d *db) display() {
-
-	t := d.getTableHeader()
-	d.updateSelectedEntries()
 	for _, c := range d.SelectedEntries {
 		cols := []string{c.Title, strconv.Itoa(c.Histories),
 			c.Created.Format(TimeLayout), c.Modified.Format(TimeLayout)}
@@ -138,7 +118,22 @@ func (d *db) display() {
 		}
 	}
 	t.SetStyle(table.StyleLight)
-	// t.SetPageSize(5)
+	return t
+}
+
+func (d *db) getTable() table.Writer {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+
+	switch d.Options.Fields {
+	// header row
+	case "all":
+		t.AppendHeader(table.Row{"Title (col #1)", "Histories", "Created", "Modified", "Notes"})
+	case "few":
+		t.AppendHeader(table.Row{"Title (col #1)"})
+	default:
+		t.AppendHeader(table.Row{"Title (col #1)", "Histories", "Created", "Modified"})
+	}
 
 	t.SetColumnConfigs([]table.ColumnConfig{
 		{
@@ -152,35 +147,31 @@ func (d *db) display() {
 			},
 		},
 	})
+	return t
+}
+
+func (d *db) display() {
+
+	t := d.getTable()
+	t = d.updateTableWithSelectedEntries(t)
 
 	// Note:
 	//    it sort with string sort. Try `--sort-by-col 2`` to see how it sorts.
+	t.SortBy([]table.SortBy{
+		{Number: d.Options.SortbyCol, Mode: table.Asc},
+	})
 	if d.Options.Reverse {
 		t.SortBy([]table.SortBy{
 			{Number: d.Options.SortbyCol, Mode: table.Dsc},
 		})
-	} else {
-		t.SortBy([]table.SortBy{
-			{Number: d.Options.SortbyCol, Mode: table.Asc},
-		})
 	}
 
 	fmt.Println()
-	_, w, _ := os.Pipe()
 
 	// when cacheFile is set
 	//   `./kpcli diff` uses this to save output in file & then diff them
 	if d.Options.CacheFile != "" {
-		t.SetAutoIndex(false)
-		t.SortBy([]table.SortBy{
-			{Number: 1, Mode: table.Asc},
-		})
-		t.SetOutputMirror(w)
-		data := t.RenderCSV() + "\n"
-		w.Close()
-
-		os.WriteFile(d.Options.CacheFile, []byte(data), 0600)
-		// log.Printf("wrote cachefile: %v for options: %#v", d.Options.CacheFile, d.Options.String())
+		cacheFile(t, d.Options.CacheFile)
 		return
 	}
 
@@ -199,11 +190,26 @@ func (d *db) display() {
 	case "markdown":
 		t.RenderMarkdown()
 	default:
-		if !d.Options.Diff {
+		if !d.Options.DiffCalling {
 			t.SetAutoIndex(true)
 			t.Render()
 		}
 	}
+}
+
+func cacheFile(t table.Writer, cacheFilename string) {
+	_, w, _ := os.Pipe()
+
+	t.SetAutoIndex(false)
+	t.SortBy([]table.SortBy{
+		{Number: 1, Mode: table.Asc},
+	})
+	t.SetOutputMirror(w)
+	data := t.RenderCSV() + "\n"
+	w.Close()
+
+	os.WriteFile(cacheFilename, []byte(data), 0600)
+	// log.Printf("wrote cachefile: %v for options: %#v", d.Options.CacheFile, d.Options.String())
 }
 
 func (d *db) show() {

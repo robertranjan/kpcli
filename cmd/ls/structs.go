@@ -5,11 +5,10 @@ import (
 	"time"
 )
 
+// Options holds the cli options
 type Options struct {
-	CacheFile    string
 	Database     string
 	Days         int
-	Diff         bool
 	Fields       string
 	Key          string
 	OutputFormat string
@@ -18,6 +17,9 @@ type Options struct {
 	Reverse      bool
 	Sort         string
 	SortbyCol    int
+	// options for cmd: diff
+	CacheFile   string
+	DiffCalling bool
 }
 
 type Interested struct {
@@ -42,7 +44,7 @@ func (o *Options) String() string {
 		"Fields: %v, Key: %v, OutputFormat: %v, Pass: %v, Quite: %v, "+
 		"Reverse: %v, Sort: %v, SortbyCol: %v",
 		o.CacheFile, o.Database, o.Days,
-		o.Diff, o.Fields, o.Key, o.OutputFormat, "****",
+		o.DiffCalling, o.Fields, o.Key, o.OutputFormat, "****",
 		o.Quite, o.Reverse, o.Sort, o.SortbyCol,
 	)
 }
