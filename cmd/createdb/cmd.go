@@ -46,6 +46,17 @@ func runCreate(app *cli.Context) error {
 		Pass:     app.String("pass"),
 		Key:      app.String("keyfile"),
 	}
+
+	if opts.Database == "" {
+		opts.Database = "./tmp/master-db.kdbx"
+	}
+	if opts.Pass == "" {
+		opts.Pass = "super_secret"
+	}
+	if opts.Key == "" {
+		opts.Key = "./tmp/master-db.key"
+	}
+
 	_, err := NewDB(opts)
 	if err != nil {
 		return err

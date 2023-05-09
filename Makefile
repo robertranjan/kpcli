@@ -9,6 +9,7 @@ COLOR=$(YELLOW)
 tmpDir = /tmp/$(APPNAME)
 versionDetail=$(DATESTAMP).$(shell git rev-parse --short HEAD).$(shell git rev-list HEAD --count)
 BIN = bin/kpcli
+PASSWORD ?= super_secret
 
 
 define banner

@@ -96,7 +96,7 @@ func runLs(app *cli.Context) error {
 			"   database: %v\n"+
 			"   keyfile: %v\n"+
 			"   \033[33mCould not find password for database.\033[0m\n"+
-			"   you may need to \033[32m'source ~/dotfiles/tools/kpcli/.envrc?'\033[0m\n",
+			"   Use right cli options or export necessary env vars and try\n",
 			opts.Database, opts.Key)
 	}
 

@@ -45,6 +45,10 @@ func ReadPassword(item string) string {
 
 func (d *db) createWithSampleEntries() error {
 
+	err := os.MkdirAll(filepath.Dir(d.Options.Database), 0755)
+	if err != nil {
+		return err
+	}
 	file, err := os.Create(d.Options.Database)
 	if err != nil {
 		panic(err)

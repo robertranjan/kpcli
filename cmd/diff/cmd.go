@@ -79,8 +79,8 @@ func cmd(app *cli.Context) error {
 			"   database2: %v\n"+
 			"   keyfile: %v\n"+
 			"   \033[33mCould not find password for database.\033[0m\n"+
-			"   you may need to \033[32m'source ~/dotfiles/tools/kpcli/.envrc.%v?'\033[0m\n",
-			opts.Database, opts.Database2, opts.Key, pattern)
+			"   User right cli options or export them and try again\033[0m\n",
+			opts.Database, opts.Database2, opts.Key)
 	}
 	diff := NewDiff(opts)
 	return diff.Diff()
