@@ -1,0 +1,3 @@
+export KDBX_DATABASE=./tmp/master-db.kdbx
+export KDBX_PASSWORD='super_secret'
+export KDBX_KEYFILE=./tmp/master-db.key

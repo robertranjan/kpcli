@@ -10,6 +10,8 @@ tmpDir = /tmp/$(APPNAME)
 versionDetail=$(DATESTAMP).$(shell git rev-parse --short HEAD).$(shell git rev-list HEAD --count)
 BIN = bin/kpcli
 PASSWORD ?= super_secret
+LOG_LEVEL ?= error
+BACKUP_DIR = ./bkups
 
 
 define banner
@@ -19,12 +21,17 @@ define banner
 endef
 
 # for kpcli diff
-DATABASE_BACKUP = ./bkup1/master-db.kdbx
+DATABASE_BACKUP = $(BACKUP_DIR)/master-db.kdbx
 
 # for kpcli createdb & kpcli ls
 KDBX_KEYFILE="./tmp/master-db.key"
 KDBX_DATABASE="./tmp/master-db.kdbx"
-KDBX_PASSWORD='super_secret'
+KDBX_PASSWORD='$(PASSWORD)'
+
+# for kpcli createdb & kpcli ls
+KDBX_KEYFILE2="./tmp/master-db.key"
+KDBX_DATABASE2="./tmp/master-db.kdbx"
+KDBX_PASSWORD2='$(PASSWORD)'
 
 .PHONY: help
 help:
@@ -70,43 +77,56 @@ install:
 	cp $(BIN) ~/bin/.
 
 createdb: build
+	$(call banner, $@)
 	rm -rf ./tmp && mkdir tmp
 	$(BIN) \
+		--log-level $(LOG_LEVEL) \
 		--keyfile $(KDBX_KEYFILE) \
 		--database $(KDBX_DATABASE) \
 		--pass $(KDBX_PASSWORD) \
 		createdb
 
 ls: build
+	$(call banner, $@)
 	$(BIN) \
+		--log-level $(LOG_LEVEL) \
 		--keyfile $(KDBX_KEYFILE) \
 		--database $(KDBX_DATABASE) \
 		--pass $(KDBX_PASSWORD) \
 		ls
 
 diff: build
+	$(call banner, $@)
 	$(BIN) \
+		--log-level $(LOG_LEVEL) \
 		--keyfile $(KDBX_KEYFILE) \
 		--database $(KDBX_DATABASE) \
 		--pass $(KDBX_PASSWORD) \
 		diff \
-			--database2 ${DATABASE_BACKUP}
+			--keyfile2 $(KDBX_KEYFILE2) \
+			--database2 $(KDBX_DATABASE2) \
+			--pass2 $(KDBX_PASSWORD2)
 
 local-test:
 	$(call banner, $@)
 	@rm -rf ./tmp && mkdir tmp
 
 	@echo "---- create db - success ----"
-	$(BIN) -p '${PASSWORD}' --kf ${KDBX_KEYFILE} --db ${KDBX_DATABASE} createdb || true
+	$(BIN) --log-level $(LOG_LEVEL) -p '${PASSWORD}' --kf ${KDBX_KEYFILE}
+		--db ${KDBX_DATABASE} createdb || true
 
 	@echo "---- create db - failure ----"
-	$(BIN) -p  '${PASSWORD}' -k ${KDBX_KEYFILE} --db ${KDBX_DATABASE} createdb || true
+	$(BIN) --log-level $(LOG_LEVEL) -p  '${PASSWORD}' -k ${KDBX_KEYFILE}
+		--db ${KDBX_DATABASE} createdb || true
 
 	@echo "---- List entries sorted by creation time ----"
-	@$(BIN) -k ${KDBX_KEYFILE} --dbfile ${KDBX_DATABASE} --pass '${PASSWORD}' ls --sortby-col 3 -d 30
+	@$(BIN) --log-level $(LOG_LEVEL) -k ${KDBX_KEYFILE}
+		--db ${KDBX_DATABASE} --pass '${PASSWORD}' ls --sortby-col 3 -d 30
 
 	@echo "---- List entries sorted by modification time ----"
-	@$(BIN) -k ${KDBX_KEYFILE}  --dbfile ${KDBX_DATABASE} --pass '${PASSWORD}' ls --sortby-col 4 -d 3
+	@$(BIN) --log-level $(LOG_LEVEL) -k ${KDBX_KEYFILE}
+		--db ${KDBX_DATABASE} --pass '${PASSWORD}' ls --sortby-col 4 -d 3
 
 	@echo "---- List all fields ----"
-	@$(BIN) -k ${KDBX_KEYFILE} --dbfile ${KDBX_DATABASE} --pass "${PASSWORD}" ls --sortby-col 1 -f all -d 3
+	@$(BIN) --log-level $(LOG_LEVEL) -k ${KDBX_KEYFILE}
+		--db ${KDBX_DATABASE} --pass "${PASSWORD}" ls --sortby-col 1 -f all -d 3

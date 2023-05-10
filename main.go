@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertranjan/kpcli/cmd/createdb"
-	"github.com/robertranjan/kpcli/cmd/diff"
-	"github.com/robertranjan/kpcli/cmd/ls"
+	"github.com/robertranjan/kpcli/cmd"
 	"github.com/urfave/cli/v2"
 )
 
@@ -23,10 +21,10 @@ func main() {
 	app.Version = Version
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
-		&cli.BoolFlag{
-			Name:    "debug",
-			Usage:   "enable debug log level",
-			EnvVars: []string{"KDBX_DEBUG"},
+		&cli.StringFlag{
+			Name:    "log-level",
+			Usage:   "run in debug mode",
+			EnvVars: []string{"KDBX_LOG_LEVEL"},
 		},
 		&cli.StringFlag{
 			Name:    "log-dir",
@@ -53,9 +51,9 @@ func main() {
 		},
 	}
 	app.Commands = []*cli.Command{
-		ls.Cmd,
-		createdb.Cmd,
-		diff.Cmd,
+		cmd.CmdLs,
+		cmd.CmdCreatedb,
+		cmd.CmdDiff,
 	}
 
 	if err := app.Run(os.Args); err != nil {

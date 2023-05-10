@@ -1,4 +1,4 @@
-package diff
+package cmd
 
 import (
 	"fmt"
@@ -11,12 +11,11 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/robertranjan/kpcli/cmd/ls"
 )
 
 // NewDiff returns a *Diff
 func NewDiff(opts Options) *Diff {
-	var fromDBOpts = ls.Options{
+	var fromDBOpts = Options{
 		Reverse:      true,
 		Days:         10000,
 		Pass:         opts.Pass,
@@ -29,7 +28,7 @@ func NewDiff(opts Options) *Diff {
 		CacheFile:   "database2.out",
 		DiffCalling: true,
 	}
-	var toDBOpts = ls.Options{
+	var toDBOpts = Options{
 		Reverse:      true,
 		Days:         10000,
 		Pass:         opts.Pass,
@@ -84,7 +83,7 @@ func getRecentFile(dir string, filename string) string {
 func (d *Diff) Diff() error {
 
 	// list entries from recent backup
-	dbOne, err := ls.NewDB(*d.FromDBOption)
+	dbOne, err := NewDB(*d.FromDBOption)
 	if err != nil {
 		return err
 	}
@@ -94,7 +93,7 @@ func (d *Diff) Diff() error {
 	}
 
 	// list current db entries
-	dbTwo, err := ls.NewDB(*d.ToDBOption)
+	dbTwo, err := NewDB(*d.ToDBOption)
 	if err != nil {
 		return err
 	}

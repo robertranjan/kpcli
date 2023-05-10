@@ -25,7 +25,8 @@
     export KDBX_KEYFILE="./tmp/master-db.key"
     export KDBX_DATABASE="./tmp/master-db.kdbx"
     export KDBX_PASSWORD="super_secret"
-    export DATABASE_BACKUP="./bkup1/master-db.kdbx"
+    export BACKUP_DIR="./bkups"
+    export DATABASE_BACKUP="${BACKUP_DIR}/master-db.kdbx"
 
 ## create database
 
@@ -61,11 +62,11 @@ output
             ${KDBX_DATABASE}
 
         here are the diffs:
-        ./bkup1/master-db.kdbx to ./tmp/master-db.kdbx
+        ${BACKUP_DIR}/master-db.kdbx to ./tmp/master-db.kdbx
         ----------------------------------------------------------------------
-        (removed)  Root/H&R handr block
-        ( added )  Root/H&R handr block 2022
-        ( added )  Root/Income Tax
+        (removed)  Root/example entry 1
+        ( added )  Root/example entry 2
+        ( added )  Root/example entry 3
 
 ### steps
 
