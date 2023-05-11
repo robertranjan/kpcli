@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"fmt"
+	"encoding/json"
 	"time"
 
+	"github.com/go-kit/log/level"
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
@@ -24,14 +25,21 @@ type db struct {
 }
 
 func (o *Options) String() string {
-	return fmt.Sprintf("CacheFile: %v, Database: %v, Days: %v, Diff: %v, "+
-		"Fields: %v, Key: %v, OutputFormat: %v, Pass: %v, Quite: %v, "+
-		"Reverse: %v, Sort: %v, SortbyCol: %v, Title: %v, User: %v, Pass: %v",
-		o.CacheFile, o.Database, o.Days,
-		o.DiffCalling, o.Fields, o.Key, o.OutputFormat, "****",
-		o.Quite, o.Reverse, o.Sort, o.SortbyCol,
-		o.EntryTitle, o.EntryUser, o.EntryPass,
-	)
+
+	d, err := json.MarshalIndent(o, "", "  ")
+	if err != nil {
+		level.Debug(logger).Log("failed to marshal option: o")
+	}
+	return string(d)
+
+	// return fmt.Sprintf("CacheFile: %v, Database: %v, Days: %v, Diff: %v, "+
+	// 	"Fields: %v, Key: %v, OutputFormat: %v, Pass: %v, Quite: %v, "+
+	// 	"Reverse: %v, Sort: %v, SortbyCol: %v, Title: %v, User: %v, Pass: %v",
+	// 	o.CacheFile, o.Database, o.Days,
+	// 	o.DiffCalling, o.Fields, o.Key, o.OutputFormat, "****",
+	// 	o.Quite, o.Reverse, o.Sort, o.SortbyCol,
+	// 	o.EntryTitle, o.EntryUser, o.EntryPass,
+	// )
 }
 
 // Options holds the cli options
@@ -40,7 +48,6 @@ type Options struct {
 	Database       string
 	Database2      string
 	Days           int
-	LogLevel       string
 	DiffCalling    bool
 	EntryPass      string
 	EntryTitle     string
@@ -48,6 +55,7 @@ type Options struct {
 	Fields         string
 	Key            string
 	Key2           string
+	LogLevel       string
 	Notify         bool
 	OutputFilename string
 	OutputFormat   string

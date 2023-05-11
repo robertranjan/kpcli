@@ -11,3 +11,4 @@ build/
 local/
 *.log
 bin/
+bkups/

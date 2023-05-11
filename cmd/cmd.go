@@ -29,17 +29,17 @@ Example:
 	Action: runAddEntry,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
-			Name:    "title",
+			Name:    "entry-title",
 			Usage:   "title of new entry",
 			Aliases: []string{"t"},
 		},
 		&cli.StringFlag{
-			Name:    "user",
+			Name:    "entry-user",
 			Usage:   "user of new entry",
 			Aliases: []string{"u"},
 		},
 		&cli.StringFlag{
-			Name:    "pass",
+			Name:    "entry-pass",
 			Usage:   "pass of new entry",
 			Aliases: []string{"p"},
 		},

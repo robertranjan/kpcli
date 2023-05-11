@@ -30,7 +30,7 @@ KDBX_PASSWORD='$(PASSWORD)'
 
 # for kpcli createdb & kpcli ls
 KDBX_KEYFILE2="./tmp/master-db.key"
-KDBX_DATABASE2="./tmp/master-db.kdbx"
+KDBX_DATABASE2="$(BACKUP_DIR)/master-db.kdbx"
 KDBX_PASSWORD2='$(PASSWORD)'
 
 .PHONY: help

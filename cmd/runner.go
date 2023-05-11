@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/brianvoe/gofakeit/v6"
@@ -13,42 +13,17 @@ import (
 
 func runAddEntry(app *cli.Context) error {
 
-	// copts := Options{
-	// 	Reverse:      app.Bool("reverse"),
-	// 	Days:         app.Int("days"),
-	// 	Pass:         app.String("pass"),
-	// 	Database:     app.String("database"),
-	// 	Key:          app.String("keyfile"),
-	// 	Sort:         app.String("sort"),
-	// 	Fields:       app.String("fields"),
-	// 	SortbyCol:    app.Int("sortby-col"),
-	// 	CacheFile:    app.String("cachefile"),
-	// 	Quite:        app.Bool("quite"),
-	// 	OutputFormat: app.String("output-format"),
-	// }
-	opts := Options{
-		EntryTitle: app.String("title"),
-		EntryUser:  app.String("user"),
-		EntryPass:  app.String("entry-pass"),
-		Database:   app.String("database"),
-		Key:        app.String("key"),
-	}
-
-	if opts.Pass == "" {
-		log.Fatalf("This command is using:\n"+
-			"   database: %v\n"+
-			"   keyfile: %v\n"+
-			"   \033[33mCould not find password for database.\033[0m\n"+
-			"   Use right cli options or export necessary env vars and try\n",
-			opts.Database, opts.Key)
-	}
-
-	db, err := NewDB(opts)
+	d, err := localCreateDB(app)
 	if err != nil {
+		fmt.Printf("failed to create db : %v\n", err)
 		return err
 	}
 
-	return db.AddEntry()
+	if d.Options.Pass == "" {
+		d.Options.Pass = "super_secret"
+	}
+
+	return d.AddEntry()
 }
 
 func localCreateDB(app *cli.Context) (*db, error) {
@@ -58,6 +33,10 @@ func localCreateDB(app *cli.Context) (*db, error) {
 		Database:       app.String("database"),
 		Database2:      app.String("database2"),
 		Days:           app.Int("days"),
+		DiffCalling:    app.Bool("diff-calling"),
+		EntryPass:      app.String("entry-pass"),
+		EntryTitle:     app.String("entry-title"),
+		EntryUser:      app.String("entry-user"),
 		Fields:         app.String("fields"),
 		Key:            app.String("keyfile"),
 		Key2:           app.String("keyfile2"),
@@ -73,11 +52,19 @@ func localCreateDB(app *cli.Context) (*db, error) {
 		Sort:           app.String("sort"),
 		SortbyCol:      app.Int("sortby-col"),
 	}
+
 	d, err := NewDB(opts)
 	if err != nil {
 		return nil, err
 	}
 	d.SetupLogger()
+	if d.Options.LogLevel == "debug" {
+		fmt.Printf("opts: \n%v\n", opts.String())
+	}
+
+	// Note: credsFile used by cmds: [ add, createdb ]
+	credsFile = strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".creds"
+	credsFile = filepath.Join(filepath.Dir(d.Options.Database), credsFile)
 
 	return d, nil
 }
@@ -104,14 +91,12 @@ func runCreate(app *cli.Context) error {
 		d.Options.SampleEntries = rand.Intn(12)
 	}
 
-	// level.Debug(logger).Log("------> opts: ", d.Options)
+	err = d.PreVerifyCreate()
+	if err != nil {
+		return err
+	}
 
-	// err = d.Create()
-	// if err != nil {
-	// 	level.Debug(logger).Log("---->failed to createdb, err: %v", err)
-	// }
-
-	return d.Create()
+	return d.CreateKDBX()
 }
 
 func runDiff(app *cli.Context) error {
@@ -133,15 +118,6 @@ func runDiff(app *cli.Context) error {
 		opts.Database2 = getRecentFile(BackupDIR, pattern)
 	}
 
-	if opts.Pass == "" {
-		log.Fatalf("Using:\n"+
-			"   database: %v\n"+
-			"   database2: %v\n"+
-			"   keyfile: %v\n"+
-			"   \033[33mCould not find password for database.\033[0m\n"+
-			"   User right cli options or export them and try again\033[0m\n",
-			opts.Database, opts.Database2, opts.Key)
-	}
 	diff := NewDiff(opts)
 	return diff.Diff()
 }

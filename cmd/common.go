@@ -13,6 +13,7 @@ import (
 )
 
 var logger log.Logger
+var credsFile string
 
 // BackupDIR is where the backup databases are
 const BackupDIR = "./bkups/"
@@ -26,6 +27,10 @@ var (
 	lengthUser = 25
 )
 
+func init() {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+}
+
 // NewDB create and return a new kdbx db object
 func NewDB(opts Options) (*db, error) {
 	d := &db{
@@ -33,10 +38,6 @@ func NewDB(opts Options) (*db, error) {
 	}
 	// d.Unlock()
 	return d, nil
-}
-
-func init() {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 func MkValue(key string, value string) gokeepasslib.ValueData {
@@ -83,13 +84,21 @@ func (d *db) SetupLogger() {
 
 	switch d.Options.LogLevel {
 	case "debug":
-		logger = level.NewFilter(log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowDebug())
+		logger = level.NewFilter(
+			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowDebug(),
+		)
 	case "info":
-		logger = level.NewFilter(log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowInfo())
+		logger = level.NewFilter(
+			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowInfo(),
+		)
 	case "warn":
-		logger = level.NewFilter(log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowWarn())
+		logger = level.NewFilter(
+			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowWarn(),
+		)
 	default:
-		logger = level.NewFilter(log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowError())
+		logger = level.NewFilter(
+			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowError(),
+		)
 	}
 	// Log some messages at different levels
 	level.Debug(logger).Log("message", "This is a debug message", "value", 123)

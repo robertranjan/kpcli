@@ -3,39 +3,45 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-kit/log/level"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
-func (d *db) Unlock() {
+func (d *db) Unlock() error {
 	file, err := os.Open(d.Options.Database)
 	if err != nil {
-		log.Fatalf("failed open database file: %v, err: %v", d.Options.Database, err)
+		level.Error(logger).Log("failed open database file: %v, err: %v", d.Options.Database, err)
+		return err
 	}
 
 	db := gokeepasslib.NewDatabase(gokeepasslib.WithDatabaseKDBXVersion4())
 	cred, err := gokeepasslib.NewPasswordAndKeyCredentials(d.Options.Pass, d.Options.Key)
 	if err != nil {
-		log.Fatalf("failed to create credentials, err: %v", err)
+		level.Error(logger).Log("failed to create credentials, err: %v", err)
+		return err
 	}
 	db.Credentials = cred
 
 	if err := gokeepasslib.NewDecoder(file).Decode(db); err != nil {
-		log.Fatalf("failed to decode dbfile: %#v, err: %v",
-			d.Options.Database, err)
+		level.Error(logger).Log("failed to decode dbfile:", d.Options.Database, "err:", err)
+		if d.Options.LogLevel == "debug" {
+			fmt.Printf("opts: \n%v\n", d.Options.String())
+		}
+		return err
 	}
 
 	if err := db.UnlockProtectedEntries(); err != nil {
-		log.Fatalf("failed to unload db, err: %v", err)
+		level.Error(logger).Log("failed to unload db, err: %v", err)
+		return err
 	}
 	d.RawData = db
-
+	return nil
 }
 
 func (d *db) FetchDBEntries() {

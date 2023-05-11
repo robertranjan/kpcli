@@ -54,6 +54,7 @@ func main() {
 		cmd.CmdLs,
 		cmd.CmdCreatedb,
 		cmd.CmdDiff,
+		cmd.CmdAdd,
 	}
 
 	if err := app.Run(os.Args); err != nil {

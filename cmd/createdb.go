@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
@@ -17,7 +18,7 @@ import (
 // }
 
 // NewDB creates and returns a new kdbx database
-func (d *db) Create() error {
+func (d *db) PreVerifyCreate() error {
 
 	// return if database already exist
 	if _, err := os.Stat(d.Options.Database); !errors.Is(err, os.ErrNotExist) {
@@ -39,13 +40,19 @@ func (d *db) Create() error {
 	}
 
 	// create db with some sample entries
-	d.CreateWithSampleEntries()
 
 	return nil
 }
 
-func (d *db) CreateWithSampleEntries() error {
-	// fmt.Printf("here... %d, opts: %#v\n", 1, d.Options)
+func GenerateKDBXEntries(n int) []gokeepasslib.Entry {
+	var rv []gokeepasslib.Entry
+	for i := 0; i < n; i++ {
+		rv = append(rv, CreateNewEntry("", "", ""))
+	}
+	return rv
+}
+
+func (d *db) CreateKDBX() error {
 
 	err := os.MkdirAll(filepath.Dir(d.Options.Database), 0755)
 	if err != nil {
@@ -65,29 +72,21 @@ func (d *db) CreateWithSampleEntries() error {
 	rootGroup := gokeepasslib.NewGroup()
 	rootGroup.Name = "root group"
 
-	for i := 0; i < d.Options.SampleEntries; i++ {
-		// create an entry and append to rootGroup
-		entry1 := CreateNewEntry("", "", "")
-		rootGroup.Entries = append(rootGroup.Entries, entry1)
-	}
+	rootGroup.Entries = append(rootGroup.Entries, GenerateKDBXEntries(d.Options.SampleEntries)...)
 
 	// create a subgroup
 	subGroup := gokeepasslib.NewGroup()
 	subGroup.Name = "sub group"
 
-	for i := 0; i < d.Options.SampleEntries; i++ {
-		// create an entry and append to subGroup
-		entry2 := CreateNewEntry("", "", "")
-		subGroup.Entries = append(subGroup.Entries, entry2)
-	}
+	subGroup.Entries = append(subGroup.Entries, GenerateKDBXEntries(d.Options.SampleEntries)...)
 
 	// add subgroups to root group
 	rootGroup.Groups = append(rootGroup.Groups, subGroup)
 
 	// write keyfile and password file
-	os.WriteFile(d.Options.Key, []byte("my keyfile content"), 0600)
+	// os.WriteFile(d.Options.Key, []byte("my keyfile content"), 0600)
+	os.WriteFile(d.Options.Key, []byte(gofakeit.BitcoinPrivateKey()), 0600)
 
-	credsFile := strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".creds"
 	content := "export KDBX_DATABASE=" + d.Options.Database + "\n"
 	content += "export KDBX_PASSWORD='" + d.Options.Pass + "'\n"
 	content += "export KDBX_KEYFILE=" + d.Options.Key + "\n"
