@@ -13,6 +13,14 @@ PASSWORD ?= super_secret
 LOG_LEVEL ?= error
 BACKUP_DIR = ./bkups
 
+GitTagLocal = $(shell git tags | tail -n1 | awk '{print $$1}')
+GitTagRemote = $(shell git ls-remote --tags 2>/dev/null | tail -n1 | awk -F'/' '{print $$3}')
+appVersionConfig = $(shell awk '/"version":/ {print $$2}' butler.json | tr -d '",')
+appVersionSrc = $(shell awk -F'=' '/var Version/ {gsub(/"/,DD,$$2);gsub(/ /,"",$$2);print $$2}' versioninfo/versioninfo.go)
+DOT_FILE = ./tmp/flow-dia.dot
+GOTRACE_BIN = ~/go/bin/gotrace
+DOT_OUTFILE = ./tmp/gotrace.png
+
 
 define banner
 @printf "############################################\n"
@@ -33,15 +41,15 @@ KDBX_KEYFILE2="./tmp/master-db.key"
 KDBX_DATABASE2="$(BACKUP_DIR)/master-db.kdbx"
 KDBX_PASSWORD2='$(PASSWORD)'
 
-.PHONY: help
-help:
-	$(call banner, $@)
-	@printf "\e[1;33mHere are the available targets:\e[32m\n"
-	@make -qp 2> /dev/null | \
-		awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {split($$1,A,/ /);for(i in A)print A[i]}' | \
-		sort -u | egrep -v "(Makefile)" | column
-	@printf "\e[0m\n"
-	echo versionDetail: $(versionDetail)
+# .PHONY: help
+# help:
+# 	$(call banner, $@)
+# 	@printf "\e[1;33mHere are the available targets:\e[32m\n"
+# 	@make -qp 2> /dev/null | \
+# 		awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {split($$1,A,/ /);for(i in A)print A[i]}' | \
+# 		sort -u | egrep -v "(Makefile)" | column
+# 	@printf "\e[0m\n"
+# 	echo versionDetail: $(versionDetail)
 
 fix-link:
 	$(call banner, $@)
@@ -130,3 +138,27 @@ local-test:
 	@echo "---- List all fields ----"
 	@$(BIN) --log-level $(LOG_LEVEL) -k ${KDBX_KEYFILE}
 		--db ${KDBX_DATABASE} --pass "${PASSWORD}" ls --sortby-col 1 -f all -d 3
+
+## help: print this help message
+.PHONY: help
+help:
+	@echo 'Usage:'
+	@sed -n 's/^##/ /p' ${MAKEFILE_LIST} | column -t -s ':'
+
+## release-check: check local & remoate git tags and suggest to create and or push tags to remote
+release-check:
+	@printf "\n - Git tag:\n"
+	@printf "   - $(GitTagLocal): local\n"
+	@printf "   - $(GitTagRemote): remote \n\n"
+	@printf " - Version from files:\n"
+	@printf "   - $(appVersionConfig): butler.json \n"
+	@printf "   - $(appVersionSrc): versioninfo/versioninfo.go\n\n"
+ifeq ($(GitTagRemote),$(GitTagLocal))
+	@echo " - Version: $(appVersionConfig) is already on upstream. Either create new tag or overwrite and push forcefully."
+	@printf "     create new tag      : git tag $(appVersionConfig)+1 && git push origin --tags \n"
+	@printf "     overwrite forcefully: git tag --force $(appVersionConfig) && git push origin --tags --force \n"
+else
+	@printf " - tag: $(GitTagLocal) is not in remote, push it to remote using below cmd\n"
+	@printf "     - merge PR on GitHub UI\n       git co main && git pull\n"
+	@printf "       git tag $(appVersionConfig) && git push origin --tags \n"
+endif
