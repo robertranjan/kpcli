@@ -23,12 +23,12 @@ endef
 # for kpcli diff
 DATABASE_BACKUP = $(BACKUP_DIR)/master-db.kdbx
 
-# for kpcli createdb & kpcli ls
+# for kpcli create & kpcli ls
 KDBX_KEYFILE="./tmp/master-db.key"
 KDBX_DATABASE="./tmp/master-db.kdbx"
 KDBX_PASSWORD='$(PASSWORD)'
 
-# for kpcli createdb & kpcli ls
+# for kpcli create & kpcli ls
 KDBX_KEYFILE2="./tmp/master-db.key"
 KDBX_DATABASE2="$(BACKUP_DIR)/master-db.kdbx"
 KDBX_PASSWORD2='$(PASSWORD)'
@@ -71,12 +71,12 @@ run: build
 	$(call banner, $@)
 	$(BIN) ls
 
-install:
+install: build
 	$(call banner, $@)
 	cp $(BIN) ~/go/bin/.
 	cp $(BIN) ~/bin/.
 
-createdb: build
+create: build
 	$(call banner, $@)
 	rm -rf ./tmp && mkdir tmp
 	$(BIN) \
@@ -84,7 +84,7 @@ createdb: build
 		--keyfile $(KDBX_KEYFILE) \
 		--database $(KDBX_DATABASE) \
 		--pass $(KDBX_PASSWORD) \
-		createdb
+		create
 
 ls: build
 	$(call banner, $@)
@@ -113,11 +113,11 @@ local-test:
 
 	@echo "---- create db - success ----"
 	$(BIN) --log-level $(LOG_LEVEL) -p '${PASSWORD}' --kf ${KDBX_KEYFILE}
-		--db ${KDBX_DATABASE} createdb || true
+		--db ${KDBX_DATABASE} create || true
 
 	@echo "---- create db - failure ----"
 	$(BIN) --log-level $(LOG_LEVEL) -p  '${PASSWORD}' -k ${KDBX_KEYFILE}
-		--db ${KDBX_DATABASE} createdb || true
+		--db ${KDBX_DATABASE} create || true
 
 	@echo "---- List entries sorted by creation time ----"
 	@$(BIN) --log-level $(LOG_LEVEL) -k ${KDBX_KEYFILE}

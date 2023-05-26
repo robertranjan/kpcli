@@ -2,18 +2,18 @@ package cmd
 
 import (
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"github.com/sirupsen/logrus"
 	"github.com/tobischo/gokeepasslib/v3"
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
-var logger log.Logger
-var credsFile string
+// var logger log.Logger
+
+// Note: credsFile used by cmds: [ add, create ]
+var credsFile string = "./tmp/master-db.creds"
 
 // BackupDIR is where the backup databases are
 const BackupDIR = "./bkups/"
@@ -80,30 +80,68 @@ func CreateNewEntry(t, u, p string) gokeepasslib.Entry {
 }
 
 // SetupLogger create and setup logger with zap pkg
-func (d *db) SetupLogger() {
+// func (d *db) SetupLogger() {
 
-	switch d.Options.LogLevel {
-	case "debug":
-		logger = level.NewFilter(
-			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowDebug(),
-		)
+// 	switch d.Options.LogLevel {
+// 	case "debug":
+// 		logger = level.NewFilter(
+// 			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowDebug(),
+// 		)
+// 	case "info":
+// 		logger = level.NewFilter(
+// 			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowInfo(),
+// 		)
+// 	case "warn":
+// 		logger = level.NewFilter(
+// 			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowWarn(),
+// 		)
+// 	default:
+// 		logger = level.NewFilter(
+// 			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowError(),
+// 		)
+// 	}
+// 	// Log some messages at different levels
+// 	// level.Debug(logger).Log("message", "This is a debug message", "value", 123)
+// 	// level.Info(logger).Log("message", "This is an info message", "value", 456)
+// 	// level.Warn(logger).Log("message", "This is a warning message", "value", 789)
+// 	// level.Error(logger).Log("message", "This is an error message", "value", 999)
+
+// }
+
+var log *logrus.Logger
+
+func (d *db) InitGetLogger(logLvl string) *logrus.Logger {
+	log = logrus.New()
+	defaultLvl := log.GetLevel()
+
+	switch logLvl {
 	case "info":
-		logger = level.NewFilter(
-			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowInfo(),
-		)
+		log.SetLevel(logrus.InfoLevel)
 	case "warn":
-		logger = level.NewFilter(
-			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowWarn(),
-		)
-	default:
-		logger = level.NewFilter(
-			log.NewJSONLogger(log.NewSyncWriter(os.Stdout)), level.AllowError(),
-		)
+		log.SetLevel(logrus.WarnLevel)
+	case "error":
+		log.SetLevel(logrus.ErrorLevel)
+	case "debug":
+		log.SetLevel(logrus.DebugLevel)
+	case "trace":
+		log.SetLevel(logrus.TraceLevel)
 	}
-	// Log some messages at different levels
-	level.Debug(logger).Log("message", "This is a debug message", "value", 123)
-	level.Info(logger).Log("message", "This is an info message", "value", 456)
-	level.Warn(logger).Log("message", "This is a warning message", "value", 789)
-	level.Error(logger).Log("message", "This is an error message", "value", 999)
 
+	log.SetReportCaller(true)
+	log.Formatter = &logrus.TextFormatter{
+		DisableTimestamp: false,
+		DisableColors:    true,
+		// CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+		// 	s := strings.Split(f.Function, ".")
+		// 	funcname := fmt.Sprintf("%s: ", s[len(s)-1])
+		// 	dir, filename := path.Split(f.File)
+		// 	filename = fmt.Sprintf(" %s:%d, ", filepath.Join(filepath.Base(dir), filename), f.Line)
+		// 	rs := fmt.Sprintf("%-50s", filename+funcname)
+		// 	return rs, ""
+		// },
+	}
+	if defaultLvl != log.GetLevel() {
+		log.Info("changing loglevel from ", defaultLvl, " to: ", log.GetLevel())
+	}
+	return log
 }

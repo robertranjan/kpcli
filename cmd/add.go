@@ -1,19 +1,19 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
+	// "log"
 	"os"
 	"path/filepath"
 
 	"github.com/bitfield/script"
-	"github.com/go-kit/log/level"
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
 func (d *db) AddEntry() error {
 	err := d.Unlock()
 	if err != nil {
-		level.Error(logger).Log("failed to unlock db, err: ", err)
+		log.Print("failed to unlock db, err: ", err)
 		return err
 	}
 	newFile := d.Options.Database
@@ -31,12 +31,12 @@ func (d *db) AddEntry() error {
 
 	file, err := os.Create(newFile)
 	if err != nil {
-		log.Fatalf("failed open database file: %v, err: %v", d.Options.Database, err)
+		return fmt.Errorf("failed open database %q file: %v", d.Options.Database, err)
 	}
 	// and encode it into the file
 	keepassEncoder := gokeepasslib.NewEncoder(file)
 	if err := keepassEncoder.Encode(d.RawData); err != nil {
-		panic(err)
+		return fmt.Errorf("failed to encode db, err: %v", err)
 	}
 
 	CopyFile(d.Options.Database, filepath.Join(BackupDIR, filepath.Base(d.Options.Database)))
@@ -52,5 +52,5 @@ func CopyFile(cur, new string) {
 	os.MkdirAll(filepath.Dir(new), 0755)
 	cmd := "cp " + cur + " " + new
 	script.Exec(cmd).Stdout()
-	level.Debug(logger).Log("copy cmd: ", cmd)
+	log.Println("copy cmd: ", cmd)
 }

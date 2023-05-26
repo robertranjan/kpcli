@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
+	// "log"
 	"os"
 
 	gomail "gopkg.in/gomail.v2"
@@ -39,6 +40,6 @@ func (d *Diff) Notify(contentFile string) {
 
 	// Send the email
 	if err := n.DialAndSend(msg); err != nil {
-		panic(err)
+		fmt.Printf("failed to notify: %v", err)
 	}
 }

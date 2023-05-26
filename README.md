@@ -30,19 +30,48 @@
 
 ## create database
 
+syntax:
+    kpcli \
+        --keyfile {keyfile} \
+        --name {xyx.kdbx} \
+        --pass {password to encrypt/decrypt kdbx} \
+        create
+
+eg: 1
+
     bin/kpcli \
         --keyfile ${KDBX_KEYFILE} \
         --database ${KDBX_DATABASE} \
         --pass ${KDBX_PASSWORD} \
-        createdb
+        create
 
 ## list entries
+
+syntax:
+
+    ./kpcli --keyfile <keyfile> \
+            --database <database-filename> \
+        ls  [--reverse] [--days 10] [--sort-by-col 1|2|3|4]
+            ; --reverse -> reverse order
+            ; --sort-by-col N
+                1 -> title
+                2 -> history count
+                3 -> creation time
+                4 -> mod time
+            ; --days 10 --> shows entries created or modified in the last 10 days
+
+eg: 1
 
     bin/kpcli \
         --keyfile $(KDBX_KEYFILE) \
         --database $(KDBX_DATABASE) \
         --pass $(KDBX_PASSWORD) \
         ls 
+
+eg: 2
+
+    kpcli ls --sortby-col 4 -d 2
+        ; shows entries modified in last 2 days ORDER by col 4(modified time)
 
 ## diff databases
 
