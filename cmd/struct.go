@@ -27,7 +27,7 @@ func (o *Options) String() string {
 
 	d, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
-		log.Debug("failed to marshal option, err: %v", err)
+		log.Debugf("failed to marshal option, err: %v", err)
 	}
 	return string(d)
 

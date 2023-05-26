@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    name: Build, Test, Check & Release
+    runs-on: ubuntu-latest
+    # env:
+    #   BUTLER_DEBUG: true
+    steps:
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Restore Cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: ~/go/pkg
+          key: 1.19-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+
+      - name: Get butler
+        run: |
+          go get github.com/robertranjan/butler
+          go install github.com/robertranjan/butler
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+
+      - name: Build
+        run: |
+          export PATH=${PATH}:`go env GOPATH`/bin
+          env
+          echo ${{ github.sha }} > Release.txt
+          butler build
+        env:
+          BUTLER_DEBUG: true
+
+      - name: Test
+        run: |
+          export PATH=${PATH}:`go env GOPATH`/bin
+          butler test
+          cat Release.txt
+
+      - name: Staticcheck
+        run: |
+          export PATH=${PATH}:`go env GOPATH`/bin
+          butler staticcheck
+
+      - name: Package
+        run: |
+          export PATH=${PATH}:`go env GOPATH`/bin
+          butler package
+
+      - uses: actions/upload-artifact@v3
+        name: Publish
+        with:
+          name: kpcli_darwin_amd64.zip
+          path: bin/kpcli_darwin_amd64.tar.gz
+
+      - uses: actions/upload-artifact@v3
+        name: Publish
+        with:
+          name: kpcli_darwin_arm64.zip
+          path: bin/kpcli_darwin_arm64.tar.gz
+
+      - uses: actions/upload-artifact@v3
+        name: Publish
+        with:
+          name: kpcli_windows_amd64.zip
+          path: bin/kpcli_windows_amd64.exe.zip
+
+      - uses: actions/upload-artifact@v3
+        name: Publish
+        with:
+          name: kpcli_linux_amd64.zip
+          path: bin/kpcli_linux_amd64.tar.gz
+
+      - name: Release with Notes
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            bin/kpcli_darwin_arm64.tar.gz
+            bin/kpcli_linux_amd64.tar.gz
+            bin/kpcli_windows_amd64.exe.zip
+            bin/kpcli_darwin_amd64.tar.gz
+            README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

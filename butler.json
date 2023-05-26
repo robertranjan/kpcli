@@ -7,7 +7,7 @@
         "main_package": "github.com/robertranjan/kpcli"
     },
     "build": {
-        "output_path": "build",
+        "output_path": "bin",
         "ld_flags": [
             "-s",
             "-w"
