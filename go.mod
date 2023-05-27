@@ -6,8 +6,8 @@ require (
 	github.com/bitfield/script v0.22.0
 	github.com/brianvoe/gofakeit/v6 v6.21.0
 	github.com/fatih/color v1.15.0
-	github.com/go-kit/log v0.2.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
+	github.com/sirupsen/logrus v1.9.2
 	github.com/tobischo/gokeepasslib/v3 v3.5.1
 	github.com/urfave/cli/v2 v2.25.3
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
@@ -17,7 +17,6 @@ require (
 	github.com/aead/argon2 v0.0.0-20180111183520-a87724528b07 // indirect
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/itchyny/gojq v0.12.12 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

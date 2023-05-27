@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/robertranjan/kpcli/cmd"
+	"github.com/robertranjan/kpcli/versioninfo"
 	"github.com/urfave/cli/v2"
 )
 
@@ -18,7 +19,7 @@ func main() {
 	// 		git rev-parse --short HEAD
 	// 		git rev-list HEAD --count
 	// app.Version = "2023Feb19.f774b64.10"
-	app.Version = Version
+	app.Version = versioninfo.Version
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{

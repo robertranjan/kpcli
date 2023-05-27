@@ -3,7 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
+
+	// "log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,7 +61,7 @@ func (d *db) CreateKDBX() error {
 	}
 	file, err := os.Create(d.Options.Database)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create dbfile: %v", err)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
@@ -116,9 +117,10 @@ func (d *db) CreateKDBX() error {
 	// and encode it into the file
 	keepassEncoder := gokeepasslib.NewEncoder(file)
 	if err := keepassEncoder.Encode(db); err != nil {
-		panic(err)
+		return fmt.Errorf("failed to encode db file: %v", err)
 	}
 
 	log.Printf("Wrote %d entries to kdbx file: %s", d.Options.SampleEntries, d.Options.Database)
+	log.Printf("now, you may try 'source %v' and 'kpcli ls'", credsFile)
 	return nil
 }

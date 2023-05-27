@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
@@ -28,7 +27,7 @@ func (o *Options) String() string {
 
 	d, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
-		level.Debug(logger).Log("failed to marshal option: o")
+		log.Debugf("failed to marshal option, err: %v", err)
 	}
 	return string(d)
 

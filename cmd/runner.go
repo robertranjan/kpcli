@@ -13,7 +13,7 @@ import (
 
 func runAddEntry(app *cli.Context) error {
 
-	d, err := localCreateDB(app)
+	d, err := newObject(app)
 	if err != nil {
 		fmt.Printf("failed to create db : %v\n", err)
 		return err
@@ -26,7 +26,17 @@ func runAddEntry(app *cli.Context) error {
 	return d.AddEntry()
 }
 
-func localCreateDB(app *cli.Context) (*db, error) {
+// func (d *db) setupDefaultKeyKdbx() {
+
+// 	if d.Options.Key == "" {
+// 		d.Options.Key = "./tmp/master-db.key"
+// 	}
+// 	if d.Options.Database == "" {
+// 		d.Options.Database = "./tmp/master-db.key"
+// 	}
+// }
+
+func newObject(app *cli.Context) (*db, error) {
 
 	opts := Options{
 		CacheFile:      app.String("cachefile"),
@@ -57,21 +67,26 @@ func localCreateDB(app *cli.Context) (*db, error) {
 	if err != nil {
 		return nil, err
 	}
-	d.SetupLogger()
+	d.InitGetLogger(opts.LogLevel)
 	if d.Options.LogLevel == "debug" {
 		fmt.Printf("opts: \n%v\n", opts.String())
 	}
 
-	// Note: credsFile used by cmds: [ add, createdb ]
-	credsFile = strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".creds"
-	credsFile = filepath.Join(filepath.Dir(d.Options.Database), credsFile)
+	// d.setupDefaultKeyKdbx()
+
+	// Note: credsFile used by cmds: [ add, create ]
+	// fix it only this is mentioned to preserve the default value as is for defualt case
+	if d.Options.Key != "" {
+		credsFile = strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".creds"
+		credsFile = filepath.Join(filepath.Dir(d.Options.Key), credsFile)
+	}
 
 	return d, nil
 }
 
 func runCreate(app *cli.Context) error {
 
-	d, err := localCreateDB(app)
+	d, err := newObject(app)
 	if err != nil {
 		fmt.Printf("failed to create db : %v\n", err)
 		return err
@@ -124,12 +139,15 @@ func runDiff(app *cli.Context) error {
 
 func runLs(app *cli.Context) error {
 
-	d, err := localCreateDB(app)
+	d, err := newObject(app)
 	if err != nil {
 		fmt.Printf("failed to create db : %v\n", err)
 		return err
 	}
-	d.Unlock()
+	if err = d.Unlock(); err != nil {
+		fmt.Printf("failed to unlock dbfile: %v, err: %v\n", d.Options.Database, err)
+		return err
+	}
 	d.FetchDBEntries()
 
 	return d.List()
