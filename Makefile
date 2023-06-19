@@ -15,7 +15,6 @@ BACKUP_DIR = ./bkups
 
 GitTagLocal = $(shell git tags | tail -n1 | awk '{print $$1}')
 GitTagRemote = $(shell git ls-remote --tags 2>/dev/null | tail -n1 | awk -F'/' '{print $$3}')
-appVersionConfig = $(shell awk '/"version":/ {print $$2}' butler.json | tr -d '",')
 appVersionSrc = $(shell awk -F'=' '/var Version/ {gsub(/"/,DD,$$2);gsub(/ /,"",$$2);print $$2}' version/version.go)
 DOT_FILE = ./tmp/flow-dia.dot
 GOTRACE_BIN = ~/go/bin/gotrace
@@ -151,7 +150,6 @@ release-check:
 	@printf "   - $(GitTagLocal): local\n"
 	@printf "   - $(GitTagRemote): remote \n\n"
 	@printf " - Version from files:\n"
-	@printf "   - $(appVersionConfig): butler.json \n"
 	@printf "   - $(appVersionSrc): version/version.go\n\n"
 ifeq ($(GitTagRemote),$(GitTagLocal))
 	@echo " - Version: $(appVersionConfig) is already on upstream. Either create new tag or overwrite and push forcefully."

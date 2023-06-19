@@ -37,7 +37,11 @@ jobs:
           export PATH=${PATH}:`go env GOPATH`/bin
           env
           echo ${{ github.sha }} > Release.txt
-          go build -v -o bin/
+          GOOS=darwin GOARCH=arm64 go build -v -o bin/kpcli_darwin_arm64.bin
+          GOOS=darwin GOARCH=amd64 go build -v -o bin/kpcli_darwin_amd64.bin
+          GOOS=windows GOARCH=amd64 go build -v -o bin/kpcli_windows_amd64.exe
+          GOOS=linux GOARCH=amd64 go build -v -o bin/kpcli_linux_amd64.bin
+          ls -al bin/
 
       - name: Test
         run: |
@@ -50,43 +54,43 @@ jobs:
       #     export PATH=${PATH}:`go env GOPATH`/bin
       #     butler staticcheck
 
-      - name: Package
-        run: |
-          export PATH=${PATH}:`go env GOPATH`/bin
-          butler package
+      # - name: Package
+      #   run: |
+      #     export PATH=${PATH}:`go env GOPATH`/bin
+      #     butler package
 
       - uses: actions/upload-artifact@v3
         name: Publish
         with:
-          name: kpcli_darwin_amd64.zip
-          path: bin/kpcli_darwin_amd64.tar.gz
+          name: kpcli_darwin_arm64.bin
+          path: bin/kpcli_darwin_arm64.bin
 
       - uses: actions/upload-artifact@v3
         name: Publish
         with:
-          name: kpcli_darwin_arm64.zip
-          path: bin/kpcli_darwin_arm64.tar.gz
+          name: kpcli_darwin_amd64.bin
+          path: bin/kpcli_darwin_amd64.bin
 
       - uses: actions/upload-artifact@v3
         name: Publish
         with:
-          name: kpcli_windows_amd64.zip
-          path: bin/kpcli_windows_amd64.exe.zip
+          name: kpcli_windows_amd64.exe
+          path: bin/kpcli_windows_amd64.exe
 
       - uses: actions/upload-artifact@v3
         name: Publish
         with:
-          name: kpcli_linux_amd64.zip
-          path: bin/kpcli_linux_amd64.tar.gz
+          name: kpcli_linux_amd64.bin
+          path: bin/kpcli_linux_amd64.bin
 
       - name: Release with Notes
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            bin/kpcli_darwin_arm64.tar.gz
-            bin/kpcli_linux_amd64.tar.gz
-            bin/kpcli_windows_amd64.exe.zip
-            bin/kpcli_darwin_amd64.tar.gz
+            bin/kpcli_darwin_arm64.bin
+            bin/kpcli_darwin_amd64.bin
+            bin/kpcli_windows_amd64.exe
+            bin/kpcli_linux_amd64.bin
             README.md
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
