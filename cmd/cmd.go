@@ -106,6 +106,12 @@ example:
 			Usage:   "Output format; available: table, csv, markdown, html",
 			Aliases: []string{"of2"},
 		},
+		&cli.StringFlag{
+			Name:    "backup-dir",
+			Usage:   "dir to look for recent backup file(when database2 is not given)",
+			Value:   "./bkups/",
+			Aliases: []string{"bkup"},
+		},
 		&cli.BoolFlag{
 			Name:    "notify",
 			Usage:   "notify with email",

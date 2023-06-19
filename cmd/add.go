@@ -39,9 +39,9 @@ func (d *db) AddEntry() error {
 		return fmt.Errorf("failed to encode db, err: %v", err)
 	}
 
-	CopyFile(d.Options.Database, filepath.Join(BackupDIR, filepath.Base(d.Options.Database)))
-	CopyFile(d.Options.Key, filepath.Join(BackupDIR, filepath.Base(d.Options.Key)))
-	CopyFile(credsFile, filepath.Join(BackupDIR, filepath.Base(credsFile)))
+	CopyFile(d.Options.Database, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Database)))
+	CopyFile(d.Options.Key, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Key)))
+	CopyFile(credsFile, filepath.Join(d.Options.BackupDIR, filepath.Base(credsFile)))
 
 	log.Printf("kdbx with added entry(%v) has written to: %s. Total entries: %v\n",
 		entry1.GetTitle(), newFile, len(rootgp.Entries))

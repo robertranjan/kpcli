@@ -1,0 +1,136 @@
+version: "3"
+
+vars:
+  APPNAME: kpcli
+  DATETIMESTAMP: '{{ now | date "2006-01-02" }}'
+  GIT_HASH:
+    sh: git rev-parse --short HEAD
+  COMMIT_COUNT:
+    sh: git rev-list HEAD --count
+  VERSION: '{{ printf "%s.%s" .GIT_HASH .COMMIT_COUNT }}'
+
+tasks:
+  default:
+    desc: "show these available tasks"
+    cmds:
+      - task -l
+
+  build:
+    desc: "build go project"
+    dir: "{{ default .USER_WORKING_DIR .WORK_DIR }}"
+    vars:
+      BIN: "{{default .APPNAME .BIN }}"
+    cmds:
+      - |
+        go mod tidy
+        gofmt -w .
+        go build \
+          -o bin/{{.BIN}} \
+          -ldflags "
+            -s -w
+            -X github.com/robertranjan/${APPNAME}/version.Version={{.VERSION}}
+            -X github.com/robertranjan/${APPNAME}/version.BuildDate={{.DATETIMESTAMP}}" \
+          main.go
+
+  run:
+    desc: "run a go project"
+    dir: "{{ default .USER_WORKING_DIR .WORK_DIR }}"
+    vars:
+      BIN_NAME:
+        sh: basename {{.USER_WORKING_DIR}}
+    cmds:
+      - task: build
+        vars: { BIN: "{{.BIN_NAME}}" }
+      - "{{.USER_WORKING_DIR}}/bin/{{.BIN_NAME}} {{.CLI_ARGS}}"
+
+  # build:
+  #   desc: "build go project"
+  #   cmds:
+  #     - |
+  #       go mod tidy
+  #       gofmt -w .
+  #       go build \
+  #         -o bin/{{.APPNAME}} \
+  #         -ldflags "
+  #           -s -w
+  #           -X github.com/robertranjan/wiggle/version.Version={{.VERSION}}
+  #           -X github.com/robertranjan/wiggle/version.BuildDate={{.DATETIMESTAMP}}" \
+  #         main.go
+
+  install:
+    desc: "install the binary to ~/go/bin"
+    deps:
+      - build
+    cmds:
+      - |
+        cp bin/{{.APPNAME}} ~/go/bin/.
+        cp bin/{{.APPNAME}} ~/bin/.
+
+  annotate-gotrace:
+    desc: "annotate go src files with gotrace to generate dot graph"
+    preconditions:
+      - |
+        git diff --name-status --staged --exit-code
+        git diff --name-status --exit-code
+    cmds:
+      - |
+        # annotate all functions
+        echo " - adding trace commands to every functions"
+        {{.GOTRACE_BIN}} --debug -w --files $(fd -e go | tr '\n' ',' | sed 's/,$//')
+
+        # fix go imports
+        echo " - fixing go-import statments on every go files"
+        goimports -w $(fd -e go)
+
+        # rebuild application
+        echo " - building application '$(APPNAME)' with gotrace annotations "
+      - task: build
+      - |
+
+        # run app/command to generate trace
+        echo " - running 'bin/{{.APPNAME}} version' to generate traces"
+
+        # cleanup/generate .dot graph file
+        rm -rf ./tmp && mkdir -p ./tmp
+        echo "digraph {" > {{.DOT_FILE}}
+        bin/{{.APPNAME}} version | grep ^'"'  >> {{.DOT_FILE}}.tmp
+        cat {{.DOT_FILE}}.tmp | sort -u >>  {{.DOT_FILE}}
+        echo "}" >> {{.DOT_FILE}}
+
+        # generate .image file
+        cat {{.DOT_FILE}} | dot -Tpng -o {{.DOT_OUTFILE}}
+        open {{.DOT_OUTFILE}}
+
+        # summary
+        echo " - You may find the temp files generated at ./tmp/"
+        git st | grep '\tmodified:'> ./tmp/annotated-files.txt
+    vars:
+      DOT_FILE: ./tmp/flow-dia.dot
+      DOT_OUTFILE: ./tmp/gotrace.png
+      GOTRACE_BIN: ~/go/bin/gotrace
+
+  ## annotated-files.txt: generate this file from git status
+  annotated-files.txt:
+    desc: "generate the list of annotated files"
+    cmds:
+      - git st | grep '\tmodified:'> ./tmp/annotated-files.txt
+
+  ## cleanup-gotrace: cleans up all annotations mady by gotrace
+  cleanup-gotrace:
+    desc: "cleanup the annotations made by gotrace"
+    preconditions:
+      - |
+        if [[ ! -f ./tmp/annotated-files.txt ]] ; then \
+        printf "${yellow}no changes found to cleanup, exiting...\n${reset}" ; \
+        exit 1 ; \
+        fi ; \
+    cmds:
+      - |
+        printf "below are the files annotated, restoring now...\n${yellow}"
+        cat ./tmp/annotated-files.txt
+        printf "${reset}"
+        awk 'BEGIN {printf "git co "} {printf $2" "}' ./tmp/annotated-files.txt | bash
+        rm ./tmp/annotated-files.txt
+
+        # rebuilding app to restore original functionality without gotraces
+      - task: build

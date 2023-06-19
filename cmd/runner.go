@@ -121,6 +121,7 @@ func runDiff(app *cli.Context) error {
 		Pass2:          app.String("pass2"),
 		Database:       app.String("database"),
 		Database2:      app.String("database2"),
+		BackupDIR:      app.String("backup-dir"),
 		Key:            app.String("keyfile"),
 		Key2:           app.String("keyfile2"),
 		Notify:         app.Bool("notify"),
@@ -130,7 +131,7 @@ func runDiff(app *cli.Context) error {
 
 	pattern := strings.Split(path.Base(opts.Database), ".")[0]
 	if opts.Database2 == "" {
-		opts.Database2 = getRecentFile(BackupDIR, pattern)
+		opts.Database2 = getRecentFile(opts.BackupDIR, pattern)
 	}
 
 	diff := NewDiff(opts)

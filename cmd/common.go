@@ -15,9 +15,6 @@ import (
 // Note: credsFile used by cmds: [ add, create ]
 var credsFile string = "./tmp/master-db.creds"
 
-// BackupDIR is where the backup databases are
-const BackupDIR = "./bkups/"
-
 var (
 	colorGreen = "\033[32m"
 	colorReset = "\033[0m"

@@ -1,4 +1,4 @@
-package versioninfo
+package version
 
 // ProjectName contains the name of the project
 var ProjectName string = "kpcli"
@@ -17,3 +17,6 @@ var Revision string = "head"
 
 // Branch will be injected with the current branch name
 var Branch string = "main"
+
+// BuildDate will be injected at the build time
+var BuildDate string = ""

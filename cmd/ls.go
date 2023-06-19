@@ -26,7 +26,7 @@ func (d *db) Unlock() error {
 	db.Credentials = cred
 
 	if err := gokeepasslib.NewDecoder(file).Decode(db); err != nil {
-		log.Error("failed to decode dbfile:", d.Options.Database, "err:", err)
+		log.Error("failed to decode dbfile: ", d.Options.Database, " err:", err)
 		if d.Options.LogLevel == "debug" {
 			fmt.Printf("opts: \n%v\n", d.Options.String())
 		}

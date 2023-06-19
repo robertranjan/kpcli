@@ -43,6 +43,7 @@ func (o *Options) String() string {
 
 // Options holds the cli options
 type Options struct {
+	BackupDIR      string
 	CacheFile      string
 	Database       string
 	Database2      string

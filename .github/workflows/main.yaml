@@ -36,16 +36,6 @@ jobs:
           path: ~/go/pkg
           key: 1.19-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
 
-      - name: Get butler
-        run: |
-          go get github.com/robertranjan/butler
-          go install github.com/robertranjan/butler
-          echo "-----------------------------"
-          which butler
-          butler help
-          echo "-----------------------------"
-          butler version
-
       - name: Get dependencies
         run: |
           go get -v -t -d ./...
@@ -56,16 +46,16 @@ jobs:
           echo "-------- env start -----------"
           env
           echo "-------- lets start build the application -----------"
-          butler build
+          go build -v -o bin/
         env:
           BUTLER_DEBUG: true
 
       - name: Test
         run: |
           export PATH=${PATH}:`go env GOPATH`/bin
-          butler test
+          go test -v ./...
 
-      - name: Staticcheck
-        run: |
-          export PATH=${PATH}:`go env GOPATH`/bin
-          butler staticcheck
+      # - name: Staticcheck
+      #   run: |
+      #     export PATH=${PATH}:`go env GOPATH`/bin
+      #     butler staticcheck

@@ -9,8 +9,6 @@ jobs:
   release:
     name: Build, Test, Check & Release
     runs-on: ubuntu-latest
-    # env:
-    #   BUTLER_DEBUG: true
     steps:
       - name: Set up Go 1.19
         uses: actions/setup-go@v3
@@ -30,11 +28,6 @@ jobs:
           path: ~/go/pkg
           key: 1.19-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
 
-      - name: Get butler
-        run: |
-          go get github.com/robertranjan/butler
-          go install github.com/robertranjan/butler
-
       - name: Get dependencies
         run: |
           go get -v -t -d ./...
@@ -44,20 +37,18 @@ jobs:
           export PATH=${PATH}:`go env GOPATH`/bin
           env
           echo ${{ github.sha }} > Release.txt
-          butler build
-        env:
-          BUTLER_DEBUG: true
+          go build -v -o bin/
 
       - name: Test
         run: |
           export PATH=${PATH}:`go env GOPATH`/bin
-          butler test
+          go test -v ./...
           cat Release.txt
 
-      - name: Staticcheck
-        run: |
-          export PATH=${PATH}:`go env GOPATH`/bin
-          butler staticcheck
+      # - name: Staticcheck
+      #   run: |
+      #     export PATH=${PATH}:`go env GOPATH`/bin
+      #     butler staticcheck
 
       - name: Package
         run: |
