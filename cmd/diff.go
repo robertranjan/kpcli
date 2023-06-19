@@ -142,7 +142,10 @@ func (d *Diff) Diff() error {
 	HTMLOut = append(HTMLOut, outputHeader...)
 	HTMLOut = append(HTMLOut, []byte(strings.Join(HTMLLines, "\n"))...)
 	HTMLOut = append(HTMLOut, []byte("</pre>")...)
-	os.WriteFile(d.options.OutputFilename, HTMLOut, 0600)
+	err = os.WriteFile(d.options.OutputFilename, HTMLOut, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %v", err)
+	}
 
 	if d.options.Notify && len(ANSILines) > 0 {
 		d.Notify(d.options.OutputFilename)

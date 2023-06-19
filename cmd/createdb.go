@@ -86,12 +86,18 @@ func (d *db) CreateKDBX() error {
 
 	// write keyfile and password file
 	// os.WriteFile(d.Options.Key, []byte("my keyfile content"), 0600)
-	os.WriteFile(d.Options.Key, []byte(gofakeit.BitcoinPrivateKey()), 0600)
+	err = os.WriteFile(d.Options.Key, []byte(gofakeit.BitcoinPrivateKey()), 0600)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %v", err)
+	}
 
 	content := "export KDBX_DATABASE=" + d.Options.Database + "\n"
 	content += "export KDBX_PASSWORD='" + d.Options.Pass + "'\n"
 	content += "export KDBX_KEYFILE=" + d.Options.Key + "\n"
-	os.WriteFile(credsFile, []byte(content), 0600)
+	err = os.WriteFile(credsFile, []byte(content), 0600)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %v", err)
+	}
 
 	cred, err := gokeepasslib.NewPasswordAndKeyCredentials(d.Options.Pass, d.Options.Key)
 	if err != nil {

@@ -151,7 +151,11 @@ func cacheFile(t table.Writer, cacheFilename string) {
 	data := t.RenderCSV() + "\n"
 	w.Close()
 
-	os.WriteFile(cacheFilename, []byte(data), 0600)
+	err := os.WriteFile(cacheFilename, []byte(data), 0600)
+	if err != nil {
+		log.Errorf("failed to write cache file: %v", err)
+	}
+
 	// log.Printf("wrote cachefile: %v for options: %#v", d.Options.CacheFile, d.Options.String())
 }
 

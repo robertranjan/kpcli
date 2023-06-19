@@ -39,18 +39,34 @@ func (d *db) AddEntry() error {
 		return fmt.Errorf("failed to encode db, err: %v", err)
 	}
 
-	CopyFile(d.Options.Database, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Database)))
-	CopyFile(d.Options.Key, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Key)))
-	CopyFile(credsFile, filepath.Join(d.Options.BackupDIR, filepath.Base(credsFile)))
+	err = CopyFile(d.Options.Database, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Database)))
+	if err != nil {
+		return err
+	}
+	err = CopyFile(d.Options.Key, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Key)))
+	if err != nil {
+		return err
+	}
+	err = CopyFile(credsFile, filepath.Join(d.Options.BackupDIR, filepath.Base(credsFile)))
+	if err != nil {
+		return err
+	}
 
 	log.Printf("kdbx with added entry(%v) has written to: %s. Total entries: %v\n",
 		entry1.GetTitle(), newFile, len(rootgp.Entries))
 	return nil
 }
 
-func CopyFile(cur, new string) {
-	os.MkdirAll(filepath.Dir(new), 0755)
+func CopyFile(cur, new string) error {
+	err := os.MkdirAll(filepath.Dir(new), 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create folder: %v", err)
+	}
 	cmd := "cp " + cur + " " + new
-	script.Exec(cmd).Stdout()
+	_, err = script.Exec(cmd).Stdout()
+	if err != nil {
+		return fmt.Errorf("failed at script.Exec: %v", err)
+	}
 	log.Println("copy cmd: ", cmd)
+	return nil
 }

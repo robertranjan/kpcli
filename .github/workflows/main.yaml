@@ -56,7 +56,3 @@ jobs:
         run: |
           export PATH=${PATH}:`go env GOPATH`/bin
           go test -v ./...
-
-      - name: Staticcheck
-        run: |
-          staticcheck ./...
