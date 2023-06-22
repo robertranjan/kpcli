@@ -43,19 +43,24 @@ tasks:
         vars: { BIN: "{{.BIN_NAME}}" }
       - "{{.USER_WORKING_DIR}}/bin/{{.BIN_NAME}} {{.CLI_ARGS}}"
 
-  # build:
-  #   desc: "build go project"
+  # release-check:
+  #   desc: "check release tag"
   #   cmds:
   #     - |
-  #       go mod tidy
-  #       gofmt -w .
-  #       go build \
-  #         -o bin/{{.APPNAME}} \
-  #         -ldflags "
-  #           -s -w
-  #           -X github.com/robertranjan/wiggle/version.Version={{.VERSION}}
-  #           -X github.com/robertranjan/wiggle/version.BuildDate={{.DATETIMESTAMP}}" \
-  #         main.go
+  #       printf "\n - Git tag:\n"
+  #       printf "   - $(GitTagLocal): local\n"
+  #       printf "   - $(GitTagRemote): remote \n\n"
+  #       printf " - Version from files:\n"
+  #       printf "   - $(appVersionSrc): version/version.go\n\n"
+  #       ifeq ($(GitTagRemote),$(GitTagLocal))
+  #         echo " - Version: $(appVersionConfig) is already on upstream. Either create new tag or overwrite and push forcefully."
+  #         printf "     create new tag      : git tag $(appVersionConfig)+1 && git push origin --tags \n"
+  #         printf "     overwrite forcefully: git tag --force $(appVersionConfig) && git push origin --tags --force \n"
+  #       else
+  #         printf " - tag: $(GitTagLocal) is not in remote, push it to remote using below cmd\n"
+  #         printf "     - merge PR on GitHub UI\n       git co main && git pull\n"
+  #         printf "       git tag $(appVersionConfig) && git push origin --tags \n"
+  #       endif
 
   install:
     desc: "install the binary to ~/go/bin"

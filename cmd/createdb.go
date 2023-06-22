@@ -126,7 +126,8 @@ func (d *db) CreateKDBX() error {
 		return fmt.Errorf("failed to encode db file: %v", err)
 	}
 
-	log.Printf("Wrote %d entries to kdbx file: %s", d.Options.SampleEntries, d.Options.Database)
-	log.Printf("now, you may try 'source %v' and 'kpcli ls'", credsFile)
+	fmt.Printf(`Created %s file with %d sample entries. To list entries,
+	1. source %v
+	2. kpcli ls`, d.Options.Database, d.Options.SampleEntries*2, credsFile)
 	return nil
 }

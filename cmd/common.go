@@ -16,9 +16,10 @@ import (
 var credsFile string = "./tmp/master-db.creds"
 
 var (
-	colorGreen = "\033[32m"
-	colorReset = "\033[0m"
-	colorRed   = "\033[31m"
+	colorGreen  = "\033[32m"
+	colorReset  = "\033[0m"
+	colorRed    = "\033[31m"
+	colorYellow = "\033[33m"
 
 	TimeLayout = "2006-01-02 15:04:05"
 	lengthUser = 25

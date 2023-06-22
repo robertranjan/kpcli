@@ -103,7 +103,7 @@ func runCreate(app *cli.Context) error {
 	}
 
 	if d.Options.SampleEntries == 0 {
-		d.Options.SampleEntries = rand.Intn(12)
+		d.Options.SampleEntries = rand.Intn(11) + 1
 	}
 
 	err = d.PreVerifyCreate()
@@ -145,6 +145,16 @@ func runLs(app *cli.Context) error {
 		fmt.Printf("failed to create db : %v\n", err)
 		return err
 	}
+
+	if d.Options.Key == "" || d.Options.Database == "" {
+		fmt.Printf("%v"+`   --keyfile and --database are required arguments.
+	If you are trying, run below commands:
+	1. kpcli createdb
+	2. kpcli ls`+"%v\nHere is usage:\n%v", colorYellow, colorGreen, colorReset)
+		cli.ShowAppHelpAndExit(app, 0)
+		return nil
+	}
+
 	if err = d.Unlock(); err != nil {
 		fmt.Printf("failed to unlock dbfile: %v, err: %v\n", d.Options.Database, err)
 		return err

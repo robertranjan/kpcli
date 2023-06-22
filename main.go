@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/robertranjan/kpcli/cmd"
@@ -59,7 +58,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Printf("   sorry, failed to serve your request: \n\t%v\n", err)
 		os.Exit(1)
 	}
 }
