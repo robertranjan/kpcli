@@ -16,30 +16,32 @@ import (
 // NewDiff returns a *Diff
 func NewDiff(opts Options) *Diff {
 	var fromDBOpts = Options{
-		Reverse:      true,
-		Days:         10000,
-		Pass:         opts.Pass,
+		CacheFile:    "database2.out",
 		Database:     opts.Database2,
-		Key:          opts.Key,
+		Days:         10000,
+		DiffCalling:  true,
 		Fields:       "few",
-		Quite:        true,
+		Key:          opts.Key,
+		Notify:       true,
 		OutputFormat: opts.OutputFormat,
+		Pass:         opts.Pass,
+		Reverse:      true,
+		// Quite:        true,
 		// options for diff cmd
-		CacheFile:   "database2.out",
-		DiffCalling: true,
 	}
 	var toDBOpts = Options{
-		Reverse:      true,
-		Days:         10000,
-		Pass:         opts.Pass,
+		CacheFile:    "database1.out",
 		Database:     opts.Database,
-		Key:          opts.Key,
+		Days:         10000,
+		DiffCalling:  true,
 		Fields:       "few",
-		Quite:        true,
+		Key:          opts.Key,
+		Notify:       true,
 		OutputFormat: opts.OutputFormat,
+		Pass:         opts.Pass,
+		Reverse:      true,
+		// Quite:        true,
 		// options for diff cmd
-		CacheFile:   "database1.out",
-		DiffCalling: true,
 	}
 
 	return &Diff{
@@ -75,6 +77,7 @@ func getRecentFile(dir string, filename string) string {
 			recentFile = file.Name()
 		}
 	}
+	fmt.Printf("recentfile: %s\n", filepath.Join(dir, recentFile))
 	return filepath.Join(dir, recentFile)
 }
 
@@ -153,6 +156,8 @@ func (d *Diff) Diff() error {
 		color.Yellow("\n  >>> Not sending any emails " +
 			"as there is no changes or notification wasn't requested.\n")
 	}
+
+	// fmt.Printf("fromDB: %v\ntoDB: %v\nopts: %v\n", d.FromDBOption, d.ToDBOption, d.options)
 
 	return nil
 }

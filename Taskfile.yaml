@@ -8,6 +8,7 @@ vars:
   COMMIT_COUNT:
     sh: git rev-list HEAD --count
   VERSION: '{{ printf "%s.%s" .GIT_HASH .COMMIT_COUNT }}'
+  KDBX_BKUP_DIR: /Users/rt/Documents/RobertsFamily/backups/keepass/
 
 tasks:
   default:
@@ -42,6 +43,36 @@ tasks:
       - task: build
         vars: { BIN: "{{.BIN_NAME}}" }
       - "{{.USER_WORKING_DIR}}/bin/{{.BIN_NAME}} {{.CLI_ARGS}}"
+
+  diff:
+    deps:
+      - build
+    desc: "run diff"
+    cmds:
+      - |
+        rm -f tmp.csv diff.log
+
+        recentFile=$(ls -tl /Users/rt/Documents/RobertsFamily/backups/keepass/ | awk 'NR==2 { print $9 }')
+        echo "recentFile: ${recentFile}"
+        bin/kpcli --keyfile /Users/rt/Personal/password-databases/keepass-keys/RobertsFamily.key \
+            --database {{.KDBX_BKUP_DIR}}/${recentFile} \
+            --pass $(pass RobertsFamily.kdbx) \
+          ls -of csv --quite > database1.out
+
+        bin/kpcli --keyfile /Users/rt/Personal/password-databases/keepass-keys/RobertsFamily.key \
+            --database /Users/rt/syncWithCloud/googleDrive/keepass/RobertsFamily.kdbx \
+            --pass $(pass RobertsFamily.kdbx) \
+          ls -of csv --quite > database2.out
+
+        head -n 2 database1.out > tmp.csv
+        diffs=$(diff --suppress-common-lines -U0 database1.out database2.out) || true
+        echo "${diffs}" | grep -v '\-\-\-' | tail -n +3 >> tmp.csv
+
+        csvtable --border <tmp.csv > diff.log
+        diffCount=$(grep -c . diff.log)
+        if [[ "${diffCount}" -gt "4" ]]; then
+          cat diff.log
+        fi
 
   # release-check:
   #   desc: "check release tag"

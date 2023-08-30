@@ -131,13 +131,26 @@ Example:
 		--keyfile ./tmp/master-db.key \
 		--pass 'super_secret' \
 		--db ./tmp/master-db.kdbx \
-		ls`,
+		ls
+
+	kpcli \
+		--keyfile ./tmp/master-db.key \
+		--pass 'super_secret' \
+		--db ./tmp/master-db.kdbx \
+		ls \
+		--fields few
+
+	Fields options:
+		all		: {cols[0], cols[1], cols[2], cols[3], cols[4]}
+		few		: {cols[0]}
+		default	: {cols[0], cols[1], cols[2], cols[3]}
+		`,
 
 	Action: runLs,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    "fields",
-			Usage:   "fields list to be displayed",
+			Usage:   "fields list to be displayed, available options: all|few",
 			Aliases: []string{"f"},
 		},
 		&cli.BoolFlag{
