@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/robertranjan/kpcli/cmd"
@@ -37,6 +38,12 @@ func main() {
 			Aliases: []string{"kf", "k"},
 			EnvVars: []string{"KDBX_KEYFILE"},
 		},
+		&cli.BoolFlag{
+			Name:    "nokey",
+			Usage:   "do not use keyfile - go less secure",
+			Aliases: []string{"nk", "n"},
+			EnvVars: []string{"KDBX_NOKEY"},
+		},
 		&cli.StringFlag{
 			Name:    "database",
 			Usage:   "kdbx files fullpath",
@@ -58,6 +65,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
+		fmt.Printf("execution failed with err: %v\n", err)
 		os.Exit(1)
 	}
 }

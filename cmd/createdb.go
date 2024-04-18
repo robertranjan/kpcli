@@ -13,11 +13,6 @@ import (
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
-// func ReadPassword(item string) string {
-// 	password := "super_secret"
-// 	return password
-// }
-
 // NewDB creates and returns a new kdbx database
 func (d *db) PreVerifyCreate() error {
 
@@ -28,13 +23,15 @@ func (d *db) PreVerifyCreate() error {
 	}
 
 	// return if keyfile already exist
-	if _, err := os.Stat(d.Options.Key); !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("%sfile: %s already exist, won't OVERWRITE\n%s",
-			colorRed, d.Options.Key, colorReset)
+	if !d.Options.NoKey {
+		if _, err := os.Stat(d.Options.Key); !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("%sfile: %s already exist, won't OVERWRITE\n%s",
+				colorRed, d.Options.Key, colorReset)
+		}
 	}
 
 	// write the password to file: {database}.creds
-	passFile := strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".creds"
+	passFile := strings.Split(filepath.Base(d.Options.Database), ".")[0] + ".creds"
 	if _, err := os.Stat(passFile); !errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("%sWill overwrite password file: %s\n%s",
 			colorGreen, passFile, colorReset)
@@ -53,6 +50,59 @@ func GenerateKDBXEntries(n int) []gokeepasslib.Entry {
 	return rv
 }
 
+func (d *db) generateSampleEntries() gokeepasslib.Group {
+	// create root group
+	rootGroup := gokeepasslib.NewGroup()
+	rootGroup.Name = "root group"
+
+	rootGroup.Entries = append(rootGroup.Entries, GenerateKDBXEntries(d.Options.SampleEntries)...)
+
+	// create a subgroup
+	subGroup := gokeepasslib.NewGroup()
+	subGroup.Name = "sub group"
+
+	subGroup.Entries = append(subGroup.Entries, GenerateKDBXEntries(d.Options.SampleEntries)...)
+
+	// add subgroups to root group
+	rootGroup.Groups = append(rootGroup.Groups, subGroup)
+	return rootGroup
+}
+
+func (d *db) writeCredentialsFile() error {
+
+	content := "export KDBX_DATABASE=" + d.Options.Database + "\n"
+	content += "export KDBX_PASSWORD='" + d.Options.Pass + "'\n"
+	if !d.Options.NoKey {
+		content += "export KDBX_KEYFILE=" + d.Options.Key + "\n"
+	}
+	if err := os.WriteFile(credsFile, []byte(content), 0600); err != nil {
+		return fmt.Errorf("failed to write file %v, err: %v", credsFile, err)
+	}
+	return nil
+}
+
+func (d *db) generateCredentials() error {
+
+	var cred *gokeepasslib.DBCredentials
+	var err error
+
+	if d.Options.NoKey {
+		cred = gokeepasslib.NewPasswordCredentials(d.Options.Pass)
+		if cred == nil {
+			return fmt.Errorf("failed to create credentials with pass:%q ",
+				d.Options.Pass)
+		}
+	} else {
+		cred, err = gokeepasslib.NewPasswordAndKeyCredentials(d.Options.Pass, d.Options.Key)
+		if err != nil {
+			return fmt.Errorf("failed to create credentials with pass:%q and keyFile:%q, err: %v",
+				d.Options.Pass, d.Options.Key, err)
+		}
+	}
+	d.Credentials = cred
+	return nil
+}
+
 func (d *db) CreateKDBX() error {
 
 	err := os.MkdirAll(filepath.Dir(d.Options.Database), 0755)
@@ -69,44 +119,27 @@ func (d *db) CreateKDBX() error {
 		}
 	}()
 
-	// create root group
-	rootGroup := gokeepasslib.NewGroup()
-	rootGroup.Name = "root group"
-
-	rootGroup.Entries = append(rootGroup.Entries, GenerateKDBXEntries(d.Options.SampleEntries)...)
-
-	// create a subgroup
-	subGroup := gokeepasslib.NewGroup()
-	subGroup.Name = "sub group"
-
-	subGroup.Entries = append(subGroup.Entries, GenerateKDBXEntries(d.Options.SampleEntries)...)
-
-	// add subgroups to root group
-	rootGroup.Groups = append(rootGroup.Groups, subGroup)
-
 	// write keyfile and password file
 	// os.WriteFile(d.Options.Key, []byte("my keyfile content"), 0600)
-	err = os.WriteFile(d.Options.Key, []byte(gofakeit.BitcoinPrivateKey()), 0600)
-	if err != nil {
-		return fmt.Errorf("failed to write file: %v", err)
+	if !d.Options.NoKey {
+		err = os.WriteFile(d.Options.Key, []byte(gofakeit.BitcoinPrivateKey()), 0600)
+		if err != nil {
+			return fmt.Errorf("failed to write keyfile: %v, err: %v", d.Options.Key, err)
+		}
 	}
 
-	content := "export KDBX_DATABASE=" + d.Options.Database + "\n"
-	content += "export KDBX_PASSWORD='" + d.Options.Pass + "'\n"
-	content += "export KDBX_KEYFILE=" + d.Options.Key + "\n"
-	err = os.WriteFile(credsFile, []byte(content), 0600)
-	if err != nil {
-		return fmt.Errorf("failed to write file: %v", err)
+	if err = d.generateCredentials(); err != nil {
+		return err
+	}
+	if err := d.writeCredentialsFile(); err != nil {
+		return err
 	}
 
-	cred, err := gokeepasslib.NewPasswordAndKeyCredentials(d.Options.Pass, d.Options.Key)
-	if err != nil {
-		return fmt.Errorf("failed to create credentials, err: %v", err)
-	}
-	// now create the database containing the root group
+	// now create the database with the sample rootGroup
+	rootGroup := d.generateSampleEntries()
 	db := &gokeepasslib.Database{
 		Header:      gokeepasslib.NewHeader(),
-		Credentials: cred,
+		Credentials: d.Credentials,
 		Content: &gokeepasslib.DBContent{
 			Meta: gokeepasslib.NewMetaData(),
 			Root: &gokeepasslib.RootData{

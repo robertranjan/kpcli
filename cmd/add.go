@@ -43,9 +43,11 @@ func (d *db) AddEntry() error {
 	if err != nil {
 		return err
 	}
-	err = CopyFile(d.Options.Key, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Key)))
-	if err != nil {
-		return err
+	if !d.Options.NoKey {
+		err = CopyFile(d.Options.Key, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Key)))
+		if err != nil {
+			return err
+		}
 	}
 	err = CopyFile(credsFile, filepath.Join(d.Options.BackupDIR, filepath.Base(credsFile)))
 	if err != nil {

@@ -51,6 +51,7 @@ func newObject(app *cli.Context) (*db, error) {
 		Key:            app.String("keyfile"),
 		Key2:           app.String("keyfile2"),
 		LogLevel:       app.String("log-level"),
+		NoKey:          app.Bool("nokey"),
 		Notify:         app.Bool("notify"),
 		OutputFilename: "diffLog2Email.html",
 		OutputFormat:   app.String("output-format"),
@@ -75,10 +76,14 @@ func newObject(app *cli.Context) (*db, error) {
 	// d.setupDefaultKeyKdbx()
 
 	// Note: credsFile used by cmds: [ add, create ]
-	// fix it only this is mentioned to preserve the default value as is for defualt case
+	// generate credsFile path
 	if d.Options.Key != "" {
 		credsFile = strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".creds"
 		credsFile = filepath.Join(filepath.Dir(d.Options.Key), credsFile)
+	}
+	if d.Options.NoKey {
+		credsFile = strings.Split(filepath.Base(d.Options.Database), ".")[0] + ".creds"
+		credsFile = filepath.Join(filepath.Dir(d.Options.Database), credsFile)
 	}
 
 	return d, nil

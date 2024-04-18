@@ -20,6 +20,7 @@ type db struct {
 	Options         *Options
 	SelectedEntries []Interested
 	RawData         *gokeepasslib.Database
+	Credentials     *gokeepasslib.DBCredentials
 	// V               *viper.Viper
 }
 
@@ -56,6 +57,7 @@ type Options struct {
 	Key            string
 	Key2           string
 	LogLevel       string
+	NoKey          bool
 	Notify         bool
 	OutputFilename string
 	OutputFormat   string

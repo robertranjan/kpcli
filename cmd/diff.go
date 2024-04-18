@@ -147,7 +147,7 @@ func (d *Diff) Diff() error {
 	HTMLOut = append(HTMLOut, []byte("</pre>")...)
 	err = os.WriteFile(d.options.OutputFilename, HTMLOut, 0600)
 	if err != nil {
-		return fmt.Errorf("failed to write file: %v", err)
+		return fmt.Errorf("failed to write file: %v, err: %v", d.options.OutputFilename, err)
 	}
 
 	if d.options.Notify && len(ANSILines) > 0 {
