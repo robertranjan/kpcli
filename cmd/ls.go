@@ -19,11 +19,10 @@ func (d *db) Unlock() error {
 	}
 
 	db := gokeepasslib.NewDatabase(gokeepasslib.WithDatabaseKDBXVersion4())
-	cred, err := gokeepasslib.NewPasswordAndKeyCredentials(d.Options.Pass, d.Options.Key)
-	if err != nil {
-		return fmt.Errorf("failed to create credentials with pass:%q and keyFile:%q, err: %v", d.Options.Pass, d.Options.Key, err)
+	if err := d.generateCredentials(); err != nil {
+		return err
 	}
-	db.Credentials = cred
+	db.Credentials = d.Credentials
 
 	if err := gokeepasslib.NewDecoder(file).Decode(db); err != nil {
 		log.Error("failed to decode dbfile: ", d.Options.Database, " err:", err)
@@ -133,8 +132,14 @@ func (d *db) List() error {
 	if d.Options.Quite {
 		return nil
 	}
-	fmt.Printf("%sThis command used: \n\tkeyfile: %s\n\tdatabase: %s\n",
-		colorGreen, d.Options.Key, d.Options.Database)
+
+	if !d.Options.NoKey {
+		fmt.Printf("%sThis command used: \n\tkeyfile: %s\n\tdatabase: %s\n",
+			colorGreen, d.Options.Key, d.Options.Database)
+	} else {
+		fmt.Printf("%sThis command used: \n\tdatabase: %s\n",
+			colorGreen, d.Options.Database)
+	}
 	fmt.Printf("\nShowing %v of %v total entries%s\n",
 		len(d.SelectedEntries), len(d.Entries), colorReset)
 	return nil

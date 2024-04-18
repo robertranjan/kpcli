@@ -16,11 +16,49 @@ tasks:
     cmds:
       - task -l
 
+  cleanup:
+    cmd: rm -rf ./tmp
+
+  with-key:
+    silent: true
+    cmds:
+      - task: cleanup
+      - |
+        bin/kpcli \
+          --keyfile ${KDBX_KEYFILE} \
+          --database ${KDBX_DATABASE} \
+          --pass ${KDBX_PASSWORD} \
+          create
+
+        bin/kpcli \
+          --keyfile ${KDBX_KEYFILE} \
+          --database ${KDBX_DATABASE} \
+          --pass ${KDBX_PASSWORD} \
+          ls
+
+  without-key:
+    silent: true
+    cmds:
+      - task: cleanup
+      - |
+        bin/kpcli \
+          --database ${KDBX_DATABASE} \
+          --pass ${KDBX_PASSWORD} \
+          --nokey \
+          create
+
+        bin/kpcli \
+          --database ${KDBX_DATABASE} \
+          --pass ${KDBX_PASSWORD} \
+          --nokey \
+          ls
+
   build:
     desc: "build go project"
     dir: "{{ default .USER_WORKING_DIR .WORK_DIR }}"
     vars:
       BIN: "{{default .APPNAME .BIN }}"
+    silent: true
     cmds:
       - |
         go mod tidy
