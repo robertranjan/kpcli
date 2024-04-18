@@ -10,7 +10,7 @@ var ProjectDescription string = "cli to list entries of a kdbx databse"
 var ProjectCopyright string = ""
 
 // Version contains the version of the app
-var Version string = "v1.0.13_29aug23"
+var Version string = "v1.0.24_17april24"
 
 // Revision will be injected with the current commit hash
 var Revision string = "head"
