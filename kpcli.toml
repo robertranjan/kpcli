@@ -1,0 +1,22 @@
+[notify]
+emailContent = "will be generated during execution"
+emailPassword = "keepass_gmail_app_password"
+from = "yourEmail@gmail.com"
+smtpHost = "smtp.gmail.com"
+smtpPort = 587
+subject = "here are the KDBX changes since last backup!"
+to = ["yourEmail@gmail.com", "email2@domain.com"]
+
+[create]
+database = "./tmp/master-db.kdbx"
+keyfile = "./tmp/master-db.key"
+password = "super_s3cr3t"
+
+[diffCfg]
+database1 = "./tmp/database1"
+database2 = "./tmp/database2"
+keyfile1 = "./tmp/keyfile1"
+keyfile2 = "./tmp/keyfile2"
+outputFilename = "diffLog2Email.html"
+password1 = "super_secret"
+password2 = "super_secret"
