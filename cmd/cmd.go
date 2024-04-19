@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -29,6 +30,31 @@ var (
 	log         *logrus.Logger
 )
 
+var sampleConfig = `
+[notify]
+emailContent = "will be generated during execution"
+emailPassword = "keepass_gmail_app_password"
+from = "yourEmail@gmail.com"
+smtpHost = "smtp.gmail.com"
+smtpPort = 587
+subject = "here are the KDBX changes since last backup!"
+to = ["yourEmail@gmail.com", "email2@domain.com"]
+
+[create]
+database = "./tmp/master-db.kdbx"
+keyfile = "./tmp/master-db.key"
+password = "super_s3cr3t"
+
+[diffCfg]
+database1 = "./tmp/database1"
+database2 = "./tmp/database2"
+keyfile1 = "./tmp/keyfile1"
+keyfile2 = "./tmp/keyfile2"
+outputFilename = "diffLog2Email.html"
+password1 = "super_secret"
+password2 = "super_secret"
+`
+
 var CmdAdd = &cli.Command{
 	Name:    "add",
 	Usage:   "add an entry",
@@ -39,16 +65,17 @@ syntax:
 	./kpcli --keyfile <keyfile> \
 			--database <database-filename> \
 			--pass <pass to open database> \
-		add --title <title> \
-			--user <username> \
-			--pass <password>
+		add --entry-title <title> \
+			--entry-user <username> \
+			--entry-pass <password>
 
 Example:
 		kpcli add \
-			--title new-entry-1 \
-			--user example-user1 \
-			--pass secret_13
+			--entry-title new-entry-1 \
+			--entry-user example-user1 \
+			--entry-pass secret_13
 
+		task add-entry
 	`,
 
 	Action: runAddEntry,
@@ -151,6 +178,24 @@ example:
 			Aliases: []string{"n"},
 		},
 	},
+}
+
+var CmdGenerateSampleConfig = &cli.Command{
+	Name:    "generate-sample-config",
+	Usage:   "generate sample config file: kpcli.toml",
+	Aliases: []string{"gen"},
+	Description: `generate sample config file: kpcli.toml
+
+Example:
+	kpcli \
+		generate-sample-config
+	`,
+	Action: runGenerateSampleConfig,
+}
+
+func runGenerateSampleConfig(app *cli.Context) error {
+	fmt.Println("writing sample config file: kpcli.toml")
+	return os.WriteFile("kpcli.toml", []byte(sampleConfig), 0600)
 }
 
 var CmdLs = &cli.Command{
@@ -272,6 +317,7 @@ func newObject(app *cli.Context) (*db, error) {
 	outputFilename := getOutputFilename()
 
 	opts := Options{
+		BackupDIR:      app.String("backup-dir"),
 		CacheFile:      app.String("cachefile"),
 		Config:         app.String("config"),
 		Database:       app.String("database"),

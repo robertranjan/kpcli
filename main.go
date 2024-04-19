@@ -61,12 +61,19 @@ func main() {
 			Aliases: []string{"c"},
 			EnvVars: []string{"KDBX_CONFIG"},
 		},
+		&cli.StringFlag{
+			Name:    "sample-config",
+			Usage:   "generate a sample config file: kpcli.toml",
+			Aliases: []string{"sample"},
+			EnvVars: []string{"KDBX_SAMPLECONFIG"},
+		},
 	}
 	app.Commands = []*cli.Command{
 		cmd.CmdLs,
 		cmd.CmdCreatedb,
 		cmd.CmdDiff,
 		cmd.CmdAdd,
+		cmd.CmdGenerateSampleConfig,
 	}
 
 	if err := app.Run(os.Args); err != nil {

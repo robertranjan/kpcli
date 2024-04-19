@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	// "log"
 	"os"
@@ -16,7 +18,6 @@ import (
 
 // NewDB creates and returns a new kdbx database
 func (d *db) PreVerifyCreate() error {
-
 	// return if database already exist
 	if _, err := os.Stat(d.Options.Database); !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("%s %s already exist, won't OVERWRITE%s",
@@ -37,9 +38,6 @@ func (d *db) PreVerifyCreate() error {
 		fmt.Printf("%sWill overwrite password file: %s\n%s",
 			colorGreen, passFile, colorReset)
 	}
-
-	// create db with some sample entries
-
 	return nil
 }
 
@@ -70,7 +68,6 @@ func (d *db) generateSampleEntries() gokeepasslib.Group {
 }
 
 func (d *db) writeCredentialsFile() error {
-
 	content := "export KDBX_DATABASE=" + d.Options.Database + "\n"
 	content += "export KDBX_PASSWORD='" + d.Options.Pass + "'\n"
 	if !d.Options.NoKey {
@@ -83,7 +80,6 @@ func (d *db) writeCredentialsFile() error {
 }
 
 func (d *db) generateCredentials() error {
-
 	var cred *gokeepasslib.DBCredentials
 	var err error
 
@@ -112,7 +108,6 @@ func (d *db) generateCredentials() error {
 }
 
 func (d *db) CreateKDBX() error {
-
 	err := os.MkdirAll(filepath.Dir(d.Options.Database), 0755)
 	if err != nil {
 		return err
@@ -193,7 +188,7 @@ func (d *db) AddEntry() error {
 
 	file, err := os.Create(newFile)
 	if err != nil {
-		return fmt.Errorf("failed open database %q file: %v", d.Options.Database, err)
+		return fmt.Errorf("failed to create database %q file: %v", d.Options.Database, err)
 	}
 	// and encode it into the file
 	keepassEncoder := gokeepasslib.NewEncoder(file)
@@ -201,36 +196,39 @@ func (d *db) AddEntry() error {
 		return fmt.Errorf("failed to encode db, err: %v", err)
 	}
 
-	err = CopyFile(d.Options.Database, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Database)))
+	// make a copy/backup of kdbx database to backupDir
+	err = MakeACopy(d.Options.Database)
 	if err != nil {
 		return err
 	}
+
+	// make a copy/backup of keyfile to backupDir
 	if !d.Options.NoKey {
-		err = CopyFile(d.Options.Key, filepath.Join(d.Options.BackupDIR, filepath.Base(d.Options.Key)))
+		err = MakeACopy(d.Options.Key)
 		if err != nil {
 			return err
 		}
 	}
-	err = CopyFile(credsFile, filepath.Join(d.Options.BackupDIR, filepath.Base(credsFile)))
+	// make a copy/backup of credsFile to backupDir
+	err = MakeACopy(credsFile)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("kdbx with added entry(%v) has written to: %s. Total entries: %v\n",
+	log.Debugf("kdbx with added entry(%v) has written to: %s. Total entries: %v\n",
 		entry1.GetTitle(), newFile, len(rootgp.Entries))
 	return nil
 }
 
-func CopyFile(cur, new string) error {
-	err := os.MkdirAll(filepath.Dir(new), 0755)
-	if err != nil {
-		return fmt.Errorf("failed to create folder: %v", err)
-	}
-	cmd := "cp " + cur + " " + new
-	_, err = script.Exec(cmd).Stdout()
+func MakeACopy(cur string) error {
+	d, f := filepath.Split(cur)
+	newFile := filepath.Join(d, f+"."+strconv.Itoa(time.Now().Nanosecond()))
+
+	cmd := "cp " + cur + " " + newFile
+	_, err := script.Exec(cmd).Stdout()
 	if err != nil {
 		return fmt.Errorf("failed at script.Exec: %v", err)
 	}
-	log.Println("copy cmd: ", cmd)
+	log.Debug("copy cmd: ", cmd)
 	return nil
 }

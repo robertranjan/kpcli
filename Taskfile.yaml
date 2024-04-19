@@ -19,6 +19,23 @@ tasks:
   cleanup:
     cmd: rm -rf ./tmp
 
+  add-entry:
+    silent: true
+    cmds:
+      - |
+        t=$(gofakeit word)
+        u=$(gofakeit username)
+        p=$(gofakeit password)
+        echo "    Adding user: '${u}' pass: '${p}' with title: '${t}'"
+        bin/kpcli \
+          --keyfile ${KDBX_KEYFILE} \
+          --database ${KDBX_DATABASE} \
+          --pass ${KDBX_PASSWORD} \
+          add \
+            --entry-title "${t}" \
+            --entry-user "${u}" \
+            --entry-pass "${p}"
+
   with-key:
     silent: true
     cmds:

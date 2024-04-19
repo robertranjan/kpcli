@@ -1,3 +1,4 @@
+
 [notify]
 emailContent = "will be generated during execution"
 emailPassword = "keepass_gmail_app_password"

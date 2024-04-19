@@ -95,31 +95,40 @@ func (o *Options) String() string {
 
 // Options holds the cli options
 type Options struct {
+	//diff
 	BackupDIR      string
 	CacheFile      string
-	Config         string
 	Database       string
 	Database2      string
-	Days           int
 	DiffCalling    bool
-	EntryPass      string
-	EntryTitle     string
-	EntryUser      string
-	Fields         string
-	Key            string
-	Key2           string
-	LogLevel       string
-	NoKey          bool
-	Notify         bool
-	OutputFilename string
-	OutputFormat   string
 	Pass           string
 	Pass2          string
-	Quite          bool
-	Reverse        bool
-	SampleEntries  int
-	Sort           string
-	SortbyCol      int
+	OutputFilename string
+	OutputFormat   string
+	Notify         bool
+
+	// add entry
+	EntryPass  string
+	EntryTitle string
+	EntryUser  string
+
+	// ls
+	Days      int
+	Fields    string
+	Key       string
+	Key2      string
+	Reverse   bool
+	Sort      string
+	SortbyCol int
+
+	// common
+	Config   string
+	LogLevel string
+	Quite    bool
+
+	// create db
+	NoKey         bool
+	SampleEntries int
 }
 
 type Interested struct {
