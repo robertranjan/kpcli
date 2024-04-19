@@ -17,7 +17,7 @@ var (
 	smtpHost     = "smtp.gmail.com"
 	smtpPort     = 587
 	subject      = "here are the KDBX changes since last backup!"
-	emailContent = "will read later"
+	emailContent = "will be generated during execution"
 )
 
 func (d *Diff) Notify(contentFile string) {

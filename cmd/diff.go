@@ -156,8 +156,5 @@ func (d *Diff) Diff() error {
 		color.Yellow("\n  >>> Not sending any emails " +
 			"as there is no changes or notification wasn't requested.\n")
 	}
-
-	// fmt.Printf("fromDB: %v\ntoDB: %v\nopts: %v\n", d.FromDBOption, d.ToDBOption, d.options)
-
 	return nil
 }

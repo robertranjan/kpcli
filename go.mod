@@ -7,6 +7,7 @@ require (
 	github.com/brianvoe/gofakeit/v6 v6.21.0
 	github.com/fatih/color v1.15.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
+	github.com/pelletier/go-toml v1.9.5
 	github.com/sirupsen/logrus v1.9.2
 	github.com/tobischo/gokeepasslib/v3 v3.5.1
 	github.com/urfave/cli/v2 v2.25.3

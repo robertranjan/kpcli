@@ -50,8 +50,6 @@ func (d *db) FetchDBEntries() {
 }
 
 func (d *db) FetchGrpEntries(grp gokeepasslib.Group) {
-	// d.Unlock()
-
 	for _, e := range grp.Entries {
 		kv := make(map[string]string)
 		for _, entry := range e.Values {

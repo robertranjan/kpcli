@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/robertranjan/kpcli/cmd"
@@ -56,6 +55,12 @@ func main() {
 			Aliases: []string{"p"},
 			EnvVars: []string{"KDBX_PASSWORD"},
 		},
+		&cli.StringFlag{
+			Name:    "config",
+			Usage:   "read configs from file",
+			Aliases: []string{"c"},
+			EnvVars: []string{"KDBX_CONFIG"},
+		},
 	}
 	app.Commands = []*cli.Command{
 		cmd.CmdLs,
@@ -65,7 +70,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Printf("execution failed with err: %v\n", err)
 		os.Exit(1)
 	}
 }
