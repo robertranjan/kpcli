@@ -11,11 +11,15 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/robertranjan/kpcli/lib/models"
+	"github.com/robertranjan/kpcli/lib/utils"
 )
 
+type Diff models.Diff
+
 // NewDiff returns a *Diff
-func NewDiff(opts Options) *Diff {
-	var fromDBOpts = Options{
+func NewDiff(opts *models.Options) *Diff {
+	var fromDBOpts = models.Options{
 		CacheFile:    "database2.out",
 		Database:     opts.Database2,
 		Days:         10000,
@@ -29,7 +33,7 @@ func NewDiff(opts Options) *Diff {
 		// Quite:        true,
 		// options for diff cmd
 	}
-	var toDBOpts = Options{
+	var toDBOpts = models.Options{
 		CacheFile:    "database1.out",
 		Database:     opts.Database,
 		Days:         10000,
@@ -47,7 +51,7 @@ func NewDiff(opts Options) *Diff {
 	return &Diff{
 		ToDBOption:   &toDBOpts,
 		FromDBOption: &fromDBOpts,
-		options:      &opts,
+		Options:      opts,
 	}
 }
 
@@ -81,6 +85,13 @@ func getRecentFile(dir string, filename string) string {
 	return filepath.Join(dir, recentFile)
 }
 
+func NewDB(opts models.Options) (*kdbx, error) {
+	d := &kdbx{
+		Options: &opts,
+	}
+	return d, nil
+}
+
 // Diff shows the difference between 2 databases
 // notify option can be used to notify your email id (work only for gmail at the moment)
 func (d *Diff) Diff() error {
@@ -107,7 +118,7 @@ func (d *Diff) Diff() error {
 	}
 
 	outputHeader := []byte(fmt.Sprintf("here are the diffs between %v and %v\n",
-		d.options.Database2, d.options.Database))
+		d.Options.Database2, d.Options.Database))
 	cmd := exec.Command("diff", []string{"database2.out", "database1.out"}...)
 	outputHeader = append(outputHeader, []byte(strings.Repeat("-", 70))...)
 	outputHeader = append(outputHeader, []byte("\n")...)
@@ -145,13 +156,13 @@ func (d *Diff) Diff() error {
 	HTMLOut = append(HTMLOut, outputHeader...)
 	HTMLOut = append(HTMLOut, []byte(strings.Join(HTMLLines, "\n"))...)
 	HTMLOut = append(HTMLOut, []byte("</pre>")...)
-	err = os.WriteFile(d.options.OutputFilename, HTMLOut, 0600)
+	err = os.WriteFile(d.Options.OutputFilename, HTMLOut, 0600)
 	if err != nil {
-		return fmt.Errorf("failed to write file: %v, err: %v", d.options.OutputFilename, err)
+		return fmt.Errorf("failed to write file: %v, err: %v", d.Options.OutputFilename, err)
 	}
 
-	if d.options.Notify && len(ANSILines) > 0 {
-		d.Notify(d.options.OutputFilename)
+	if d.Options.Notify && len(ANSILines) > 0 {
+		utils.Notify(d.Options.OutputFilename)
 	} else {
 		color.Yellow("\n  >>> Not sending any emails " +
 			"as there is no changes or notification wasn't requested.\n")

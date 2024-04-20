@@ -1,7 +1,7 @@
 .envrc*
 .vscode/
 bin/kpcli
-*.password
+*.creds
 tmp/
 .DS_Store
 database1.out
@@ -12,3 +12,4 @@ local/
 *.log
 bin/
 bkups/
+*.csv

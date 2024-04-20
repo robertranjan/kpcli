@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -11,32 +10,44 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/robertranjan/kpcli/lib/models"
+
 	"github.com/bitfield/script"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/robertranjan/kpcli/lib/utils"
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
+type kdbx struct {
+	Entries         []models.Interested
+	Options         *models.Options
+	SelectedEntries []models.Interested
+	RawData         *gokeepasslib.Database
+}
+
+var db *kdbx
+
 // NewDB creates and returns a new kdbx database
-func (d *db) PreVerifyCreate() error {
+func (c *Client) PreVerifyCreate() error {
 	// return if database already exist
-	if _, err := os.Stat(d.Options.Database); !errors.Is(err, os.ErrNotExist) {
+	if utils.IsFileExist(c.Options.Database) {
 		return fmt.Errorf("%s %s already exist, won't OVERWRITE%s",
-			colorRed, d.Options.Database, colorReset)
+			utils.ColorRed, c.Options.Database, utils.ColorReset)
 	}
 
 	// return if keyfile already exist
-	if !d.Options.NoKey {
-		if _, err := os.Stat(d.Options.Key); !errors.Is(err, os.ErrNotExist) {
+	if !c.Options.NoKey {
+		if utils.IsFileExist(c.Options.Key) {
 			return fmt.Errorf("%sfile: %s already exist, won't OVERWRITE\n%s",
-				colorRed, d.Options.Key, colorReset)
+				utils.ColorRed, c.Options.Key, utils.ColorReset)
 		}
 	}
 
-	// write the password to file: {database}.creds
-	passFile := strings.Split(filepath.Base(d.Options.Database), ".")[0] + ".creds"
-	if _, err := os.Stat(passFile); !errors.Is(err, os.ErrNotExist) {
+	// write the credentials to file: {database}.creds
+	cred := strings.Split(filepath.Base(c.Options.Database), ".")[0] + ".creds"
+	if utils.IsFileExist(cred) {
 		fmt.Printf("%sWill overwrite password file: %s\n%s",
-			colorGreen, passFile, colorReset)
+			utils.ColorGreen, cred, utils.ColorReset)
 	}
 	return nil
 }
@@ -49,7 +60,7 @@ func GenerateKDBXEntries(n int) []gokeepasslib.Entry {
 	return rv
 }
 
-func (d *db) generateSampleEntries() gokeepasslib.Group {
+func (d *kdbx) generateSampleEntries() gokeepasslib.Group {
 	// create root group
 	rootGroup := gokeepasslib.NewGroup()
 	rootGroup.Name = "root group"
@@ -67,54 +78,54 @@ func (d *db) generateSampleEntries() gokeepasslib.Group {
 	return rootGroup
 }
 
-func (d *db) writeCredentialsFile() error {
-	content := "export KDBX_DATABASE=" + d.Options.Database + "\n"
-	content += "export KDBX_PASSWORD='" + d.Options.Pass + "'\n"
-	if !d.Options.NoKey {
-		content += "export KDBX_KEYFILE=" + d.Options.Key + "\n"
+func (c *Client) writeCredentialsFile() error {
+	content := "export KDBX_DATABASE=" + c.Options.Database + "\n"
+	content += "export KDBX_PASSWORD='" + c.Options.Pass + "'\n"
+	if !c.Options.NoKey {
+		content += "export KDBX_KEYFILE=" + c.Options.Key + "\n"
 	}
-	if err := os.WriteFile(credsFile, []byte(content), 0600); err != nil {
-		return fmt.Errorf("failed to write file %v, err: %v", credsFile, err)
+	if err := os.WriteFile(c.CredentialFile, []byte(content), 0600); err != nil {
+		return fmt.Errorf("failed to write file %v, err: %v", c.CredentialFile, err)
 	}
 	return nil
 }
 
-func (d *db) generateCredentials() error {
+func (c *Client) generateCredentials() error {
 	var cred *gokeepasslib.DBCredentials
 	var err error
 
-	if d.Options.NoKey {
-		cred = gokeepasslib.NewPasswordCredentials(d.Options.Pass)
+	if c.Options.NoKey {
+		cred = gokeepasslib.NewPasswordCredentials(c.Options.Pass)
 		if cred == nil {
 			return fmt.Errorf("failed to create credentials with pass:%q ",
-				d.Options.Pass)
+				c.Options.Pass)
 		}
-	} else {
-		// Check if the keyfile exists
-		if _, err = os.Stat(d.Options.Key); err == nil {
-			cred, err = gokeepasslib.NewPasswordAndKeyCredentials(d.Options.Pass, d.Options.Key)
-			if err != nil {
-				return fmt.Errorf("failed to create credentials with pass:%q and keyFile:%q, err: %v",
-					d.Options.Pass, d.Options.Key, err)
-			}
-		} else if os.IsNotExist(err) {
-			return fmt.Errorf("%v file does not exist. \nDid you forget to mention --nokey option?", d.Options.Key)
-		} else {
-			return fmt.Errorf("failed to check %v file exist or not:%v", d.Options.Key, err)
-		}
+		c.Credentials = cred
+		return nil
 	}
-	d.Credentials = cred
+	// check keyfile
+	if !utils.IsFileExist(c.Options.Key) {
+		return fmt.Errorf("%v file does not exist. \nDid you forget to mention --nokey option?", c.Options.Key)
+	}
+	// gen creds with keyfile
+	cred, err = gokeepasslib.NewPasswordAndKeyCredentials(c.Options.Pass, c.Options.Key)
+	if err != nil {
+		return fmt.Errorf("failed to create credentials with pass:%q and keyFile:%q, err: %v",
+			c.Options.Pass, c.Options.Key, err)
+	}
+
+	c.Credentials = cred
 	return nil
 }
 
-func (d *db) CreateKDBX() error {
-	err := os.MkdirAll(filepath.Dir(d.Options.Database), 0755)
+func (c *Client) CreateKDBX() (*gokeepasslib.Database, error) {
+	err := os.MkdirAll(filepath.Dir(c.Options.Database), 0755)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	file, err := os.Create(d.Options.Database)
+	file, err := os.Create(c.Options.Database)
 	if err != nil {
-		return fmt.Errorf("failed to create dbfile: %v", err)
+		return nil, fmt.Errorf("failed to create dbfile: %v", err)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
@@ -123,25 +134,25 @@ func (d *db) CreateKDBX() error {
 	}()
 
 	// write keyfile and password file
-	if !d.Options.NoKey {
-		err = os.WriteFile(d.Options.Key, []byte(gofakeit.BitcoinPrivateKey()), 0600)
+	if !c.Options.NoKey {
+		err = os.WriteFile(c.Options.Key, []byte(gofakeit.BitcoinPrivateKey()), 0600)
 		if err != nil {
-			return fmt.Errorf("failed to write keyfile: %v, err: %v", d.Options.Key, err)
+			return nil, fmt.Errorf("failed to write keyfile: %v, err: %v", c.Options.Key, err)
 		}
 	}
 
-	if err = d.generateCredentials(); err != nil {
-		return err
+	if err = c.generateCredentials(); err != nil {
+		return nil, err
 	}
-	if err := d.writeCredentialsFile(); err != nil {
-		return err
+	if err := c.writeCredentialsFile(); err != nil {
+		return nil, err
 	}
 
 	// now create the database with the sample rootGroup
-	rootGroup := d.generateSampleEntries()
-	db := &gokeepasslib.Database{
+	rootGroup := db.generateSampleEntries()
+	database := &gokeepasslib.Database{
 		Header:      gokeepasslib.NewHeader(),
-		Credentials: d.Credentials,
+		Credentials: c.Credentials,
 		Content: &gokeepasslib.DBContent{
 			Meta: gokeepasslib.NewMetaData(),
 			Root: &gokeepasslib.RootData{
@@ -151,23 +162,23 @@ func (d *db) CreateKDBX() error {
 	}
 
 	// Lock entries using stream cipher
-	if err := db.LockProtectedEntries(); err != nil {
+	if err := database.LockProtectedEntries(); err != nil {
 		log.Printf("error in Locking protected entries, err: %v", err)
 	}
 
 	// and encode it into the file
 	keepassEncoder := gokeepasslib.NewEncoder(file)
-	if err := keepassEncoder.Encode(db); err != nil {
-		return fmt.Errorf("failed to encode db file: %v", err)
+	if err := keepassEncoder.Encode(database); err != nil {
+		return nil, fmt.Errorf("failed to encode db file: %v", err)
 	}
 
 	fmt.Printf(`Created %s file with %d sample entries. To list entries,
 	1. source %v
-	2. kpcli ls`, d.Options.Database, d.Options.SampleEntries*2, credsFile)
-	return nil
+	2. kpcli ls`, c.Options.Database, c.Options.SampleEntries*2, c.CredentialFile)
+	return database, nil
 }
 
-func (d *db) AddEntry() error {
+func (d *kdbx) AddEntry() error {
 	err := d.Unlock()
 	if err != nil {
 		log.Print("failed to unlock db, err: ", err)
@@ -197,22 +208,17 @@ func (d *db) AddEntry() error {
 	}
 
 	// make a copy/backup of kdbx database to backupDir
-	err = MakeACopy(d.Options.Database)
+	err = backupFile(d.Options.Database)
 	if err != nil {
 		return err
 	}
 
 	// make a copy/backup of keyfile to backupDir
 	if !d.Options.NoKey {
-		err = MakeACopy(d.Options.Key)
+		err = backupFile(d.Options.Key)
 		if err != nil {
 			return err
 		}
-	}
-	// make a copy/backup of credsFile to backupDir
-	err = MakeACopy(credsFile)
-	if err != nil {
-		return err
 	}
 
 	log.Debugf("kdbx with added entry(%v) has written to: %s. Total entries: %v\n",
@@ -220,7 +226,7 @@ func (d *db) AddEntry() error {
 	return nil
 }
 
-func MakeACopy(cur string) error {
+func backupFile(cur string) error {
 	d, f := filepath.Split(cur)
 	newFile := filepath.Join(d, f+"."+strconv.Itoa(time.Now().Nanosecond()))
 

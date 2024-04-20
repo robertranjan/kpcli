@@ -1,11 +1,34 @@
-package cmd
+package utils
 
 import (
 	"fmt"
-	// "log"
+	"log"
 	"os"
 
 	gomail "gopkg.in/gomail.v2"
+)
+
+func IsFileExist(filename string) bool {
+	// Check if the keyfile exists
+	if _, err := os.Stat(filename); err == nil {
+		return true
+	}
+	return false
+}
+
+func IsFileNotExist(filename string) bool {
+	// Check if the keyfile not exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return true
+	}
+	return false
+}
+
+var (
+	ColorGreen  = "\033[32m"
+	ColorReset  = "\033[0m"
+	ColorRed    = "\033[31m"
+	ColorYellow = "\033[33m"
 )
 
 // TODO: below configs should moved out to a config file
@@ -20,7 +43,7 @@ var (
 	emailContent = "will be generated during execution"
 )
 
-func (d *Diff) Notify(contentFile string) {
+func Notify(contentFile string) {
 
 	emailContentByte, err := os.ReadFile(contentFile)
 	if err != nil {

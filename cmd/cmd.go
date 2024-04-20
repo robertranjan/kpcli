@@ -9,6 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/robertranjan/kpcli/lib/config"
+	"github.com/robertranjan/kpcli/lib/models"
+	"github.com/robertranjan/kpcli/lib/utils"
+
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/tobischo/gokeepasslib/v3"
@@ -16,45 +20,21 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+type Client models.Client
+
+var client *Client
+
 var (
 	// Note: credsFile used by cmds: [ add, create ]
-	credsFile   string = "./tmp/master-db.creds"
-	colorGreen         = "\033[32m"
-	colorReset         = "\033[0m"
-	colorRed           = "\033[31m"
-	colorYellow        = "\033[33m"
-	TimeLayout         = "2006-01-02 15:04:05"
-	lengthUser         = 25
-	configFile         = "unavailable_kpcli.toml"
-	config      Config
-	log         *logrus.Logger
+	// credsFile  = "./tmp/master-db.creds"
+	TimeLayout = "2006-01-02 15:04:05"
+	lengthUser = 25
+	configFile = "unavailable_kpcli.toml"
+	cfg        *config.Config
+	log        *logrus.Logger
 )
 
-var sampleConfig = `
-[notify]
-emailContent = "will be generated during execution"
-emailPassword = "keepass_gmail_app_password"
-from = "yourEmail@gmail.com"
-smtpHost = "smtp.gmail.com"
-smtpPort = 587
-subject = "here are the KDBX changes since last backup!"
-to = ["yourEmail@gmail.com", "email2@domain.com"]
-
-[create]
-database = "./tmp/master-db.kdbx"
-keyfile = "./tmp/master-db.key"
-password = "super_s3cr3t"
-
-[diffCfg]
-database1 = "./tmp/database1"
-database2 = "./tmp/database2"
-keyfile1 = "./tmp/keyfile1"
-keyfile2 = "./tmp/keyfile2"
-outputFilename = "diffLog2Email.html"
-password1 = "super_secret"
-password2 = "super_secret"
-`
-
+// CmdAdd helps user to add entry to password db
 var CmdAdd = &cli.Command{
 	Name:    "add",
 	Usage:   "add an entry",
@@ -98,6 +78,7 @@ Example:
 	},
 }
 
+// CmdCreatedb creates password db
 var CmdCreatedb = &cli.Command{
 	Name:    "create",
 	Usage:   "Create a new kdbx databse",
@@ -122,13 +103,14 @@ Example:
 	Action: runCreate,
 	Flags: []cli.Flag{
 		&cli.IntFlag{
-			Name:    "entries",
+			Name:    "sample-entries",
 			Usage:   "number of sample entries",
-			Aliases: []string{"e"},
+			Aliases: []string{"se"},
 		},
 	},
 }
 
+// CmdDiff runs diff between 2 passward dbs
 var CmdDiff = &cli.Command{
 	Name:    "diff",
 	Usage:   "diff entries between 2 kdbx databases",
@@ -180,6 +162,7 @@ example:
 	},
 }
 
+// CmdGenerateSampleConfig generate a sample config
 var CmdGenerateSampleConfig = &cli.Command{
 	Name:    "generate-sample-config",
 	Usage:   "generate sample config file: kpcli.toml",
@@ -194,10 +177,16 @@ Example:
 }
 
 func runGenerateSampleConfig(app *cli.Context) error {
+	InitGetLogger(app.String("log-level"))
+	if utils.IsFileExist("kpcli.toml") {
+		log.Info("found file, backing up existing file to tmp/")
+		backupFile("kpcli.toml")
+	}
 	fmt.Println("writing sample config file: kpcli.toml")
-	return os.WriteFile("kpcli.toml", []byte(sampleConfig), 0600)
+	return os.WriteFile("kpcli.toml", []byte(config.SampleConfig), 0600)
 }
 
+// CmdLs lists entries from a db
 var CmdLs = &cli.Command{
 	Name:    "ls",
 	Usage:   "lists entries",
@@ -274,140 +263,174 @@ func init() {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-func runAddEntry(app *cli.Context) error {
-	d, err := newObject(app)
-	if err != nil {
-		fmt.Printf("failed to create db : %v\n", err)
-		return err
-	}
-
-	if d.Options.Pass == "" {
-		d.Options.Pass = "super_secret"
-	}
-	return d.AddEntry()
-}
-
-func loadConfigOnDemand(configFile string) {
+// LoadConfigOnDemand loads config if present
+func LoadConfigOnDemand(configFile string) {
 	if configFile == "" {
 		// no need to load as configFile == null
 		return
 	}
-	if err := config.loadFromFile(configFile); err != nil {
+	var err error
+	if cfg, err = config.New(configFile); err != nil {
 		fmt.Println("LoadConfig failed. Continuing with cli args...")
 	}
-	log.Debugf("config: %s\n", config.String())
+	log.Debugf("config: %s\n", cfg.String())
 }
 
-func getOutputFilename() string {
-	outputFilename := "diffLog2Email.html"
-	if config.OutputFilename != "" {
-		outputFilename = config.OutputFilename
-	}
-	return outputFilename
-}
+// runAddEntry - update pkg->var: client
+func runAddEntry(app *cli.Context) error {
+	var err error
+	opts := getOptions(app)
 
-func newObject(app *cli.Context) (*db, error) {
-
-	//setup logger
-	log = InitGetLogger(app.String("log-level"))
-
-	// read config on demand
-	configFile = app.String("config")
-	loadConfigOnDemand(configFile)
-	outputFilename := getOutputFilename()
-
-	opts := Options{
-		BackupDIR:      app.String("backup-dir"),
-		CacheFile:      app.String("cachefile"),
-		Config:         app.String("config"),
-		Database:       app.String("database"),
-		Database2:      app.String("database2"),
-		Days:           app.Int("days"),
-		DiffCalling:    app.Bool("diff-calling"),
-		EntryPass:      app.String("entry-pass"),
-		EntryTitle:     app.String("entry-title"),
-		EntryUser:      app.String("entry-user"),
-		Fields:         app.String("fields"),
-		Key:            app.String("keyfile"),
-		Key2:           app.String("keyfile2"),
-		LogLevel:       app.String("log-level"),
-		NoKey:          app.Bool("nokey"),
-		Notify:         app.Bool("notify"),
-		OutputFilename: outputFilename,
-		OutputFormat:   app.String("output-format"),
-		Pass:           app.String("pass"),
-		Pass2:          app.String("pass2"),
-		Quite:          app.Bool("quite"),
-		Reverse:        app.Bool("reverse"),
-		SampleEntries:  app.Int("entries"),
-		Sort:           app.String("sort"),
-		SortbyCol:      app.Int("sortby-col"),
-	}
-
-	d, err := NewDB(opts)
-	if err != nil {
-		return nil, err
-	}
-
-	if d.Options.LogLevel == "debug" {
-		log.Printf("opts: \n%v\n", opts.String())
-	}
-
-	// generate credsFile path
-	if d.Options.Key != "" {
-		credsFile = strings.Split(filepath.Base(d.Options.Key), ".")[0] + ".creds"
-		credsFile = filepath.Join(filepath.Dir(d.Options.Key), credsFile)
-	}
-	if d.Options.NoKey {
-		credsFile = strings.Split(filepath.Base(d.Options.Database), ".")[0] + ".creds"
-		credsFile = filepath.Join(filepath.Dir(d.Options.Database), credsFile)
-	}
-
-	return d, nil
-}
-
-func runCreate(app *cli.Context) error {
-	d, err := newObject(app)
+	client, err = newClient(opts)
 	if err != nil {
 		fmt.Printf("failed to create db : %v\n", err)
 		return err
 	}
 
-	if d.Options.Database == "" {
-		d.Options.Database = "./tmp/master-db.kdbx"
-	}
-	if d.Options.Pass == "" {
-		d.Options.Pass = gofakeit.Password(true, true, true, true, false, 16)
-	}
-	if d.Options.Key == "" {
-		d.Options.Key = "./tmp/master-db.key"
+	db = &kdbx{
+		Options: client.Options,
 	}
 
-	if d.Options.SampleEntries == 0 {
-		d.Options.SampleEntries = rand.Intn(11) + 1
+	if client.Options.Pass == "" {
+		client.Options.Pass = "super_secret"
+	}
+	return db.AddEntry()
+}
+
+func getOutputFilename() string {
+	outputFilename := "diffLog2Email.html"
+	if cfg != nil && cfg.OutputFilename != "" {
+		outputFilename = cfg.OutputFilename
+	}
+	return outputFilename
+}
+
+func getOptions(app *cli.Context) *models.Options {
+	outputFilename := getOutputFilename()
+
+	return &models.Options{
+		// diff
+		BackupDIR:      app.String("backup-dir"),
+		CacheFile:      app.String("cachefile"),
+		Database:       app.String("database"),
+		Database2:      app.String("database2"),
+		DiffCalling:    app.Bool("diff-calling"),
+		Notify:         app.Bool("notify"),
+		OutputFilename: outputFilename,
+		Pass:           app.String("pass"),
+		Pass2:          app.String("pass2"),
+
+		// add entry
+		EntryPass:  app.String("entry-pass"),
+		EntryTitle: app.String("entry-title"),
+		EntryUser:  app.String("entry-user"),
+
+		// ls
+		Days:      app.Int("days"),
+		Fields:    app.String("fields"),
+		Key:       app.String("keyfile"),
+		Key2:      app.String("keyfile2"),
+		Reverse:   app.Bool("reverse"),
+		Sort:      app.String("sort"),
+		SortbyCol: app.Int("sortby-col"),
+
+		// common
+		Config:       app.String("config"),
+		LogLevel:     app.String("log-level"),
+		OutputFormat: app.String("output-format"),
+		Quite:        app.Bool("quite"),
+
+		// create db
+		NoKey:         app.Bool("nokey"),
+		SampleEntries: app.Int("sample-entries"),
+	}
+}
+
+// newClient creates a base db object using cli-args
+func newClient(opts *models.Options) (*Client, error) {
+	//setup logger
+	log = InitGetLogger(opts.LogLevel)
+
+	// read config on demand
+	// configFile = app.String("config")
+	configFile = opts.Config
+	LoadConfigOnDemand(configFile)
+
+	// opts := getOptions(app)
+	// log.Debugf("opts: \n%v\n", opts.String())
+
+	c := &Client{
+		Options:        opts,
+		CredentialFile: "./tmp/master-db.creds",
 	}
 
-	err = d.PreVerifyCreate()
+	// generate credsFile path
+	// overwrite default value with user-args
+	credsFile := strings.Split(filepath.Base(c.Options.Database), ".")[0] + ".creds"
+	credsFile = filepath.Join(filepath.Dir(c.Options.Database), credsFile)
+	c.CredentialFile = credsFile
+	return c, nil
+}
+
+func updateDefaultOptionValues() {
+	if client.Options.Database == "" {
+		client.Options.Database = "./tmp/master-db.kdbx"
+	}
+	if client.Options.Key == "" {
+		client.Options.Key = "./tmp/master-db.key"
+	}
+	if client.Options.SampleEntries == 0 {
+		client.Options.SampleEntries = rand.Intn(11) + 1
+	}
+}
+
+func runCreate(app *cli.Context) error {
+	var err error
+	opts := getOptions(app)
+
+	client, err = newClient(opts)
+	if err != nil {
+		fmt.Printf("failed to create db : %v\n", err)
+		return err
+	}
+
+	updateDefaultOptionValues()
+
+	if client.Options.Pass == "" {
+		// generate a sample password with(lwr,  upr, numeric,spl, space, length )
+		client.Options.Pass = gofakeit.Password(true, true, true, true, false, 16)
+	}
+
+	err = client.PreVerifyCreate()
+	if err != nil {
+		return err
+	}
+	// initialize global database: d
+	db = &kdbx{
+		Options: client.Options,
+	}
+	db.RawData, err = client.CreateKDBX()
 	if err != nil {
 		return err
 	}
 
-	return d.CreateKDBX()
+	return nil
 }
 
 func runDiff(app *cli.Context) error {
-	opts := Options{
-		Pass:           app.String("pass"),
-		Pass2:          app.String("pass2"),
-		Database:       app.String("database"),
-		Database2:      app.String("database2"),
-		BackupDIR:      app.String("backup-dir"),
-		Key:            app.String("keyfile"),
-		Key2:           app.String("keyfile2"),
-		Notify:         app.Bool("notify"),
-		OutputFormat:   "csv",
-		OutputFilename: "diffLog2Email.html",
-	}
+	opts := getOptions(app)
+	// opts := models.Options{
+	// 	Pass:           app.String("pass"),
+	// 	Pass2:          app.String("pass2"),
+	// 	Database:       app.String("database"),
+	// 	Database2:      app.String("database2"),
+	// 	BackupDIR:      app.String("backup-dir"),
+	// 	Key:            app.String("keyfile"),
+	// 	Key2:           app.String("keyfile2"),
+	// 	Notify:         app.Bool("notify"),
+	// 	OutputFormat:   "csv",
+	// 	OutputFilename: "diffLog2Email.html",
+	// }
 
 	pattern := strings.Split(path.Base(opts.Database), ".")[0]
 	if opts.Database2 == "" {
@@ -419,36 +442,28 @@ func runDiff(app *cli.Context) error {
 }
 
 func runLs(app *cli.Context) error {
-	d, err := newObject(app)
+	var err error
+	opts := getOptions(app)
+
+	client, err = newClient(opts)
 	if err != nil {
-		fmt.Printf("failed to create db : %v\n", err)
+		fmt.Printf("failed to create client : %v\n", err)
 		return err
 	}
 
-	if d.Options.Key == "" || d.Options.Database == "" {
-		fmt.Printf("%v"+`   --database is a required arguments.
-	If you are trying, run below commands:
-	1. kpcli createdb
-	2. kpcli ls`+"%v\nHere is usage:\n%v", colorYellow, colorGreen, colorReset)
-		cli.ShowAppHelpAndExit(app, 0)
-		return nil
+	// NewDB create and return a new kdbx db object
+
+	db = &kdbx{
+		Options: client.Options,
 	}
 
-	if err = d.Unlock(); err != nil {
-		fmt.Printf("failed to unlock dbfile: %v, err: %v\n", d.Options.Database, err)
+	if err = db.Unlock(); err != nil {
+		fmt.Printf("failed to unlock dbfile: %v, err: %v\n", client.Options.Database, err)
 		return err
 	}
-	d.FetchDBEntries()
+	db.FetchDBEntries()
 
-	return d.List()
-}
-
-// NewDB create and return a new kdbx db object
-func NewDB(opts Options) (*db, error) {
-	d := &db{
-		Options: &opts,
-	}
-	return d, nil
+	return db.List()
 }
 
 func MkValue(key string, value string) gokeepasslib.ValueData {

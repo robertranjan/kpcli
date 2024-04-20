@@ -8,7 +8,6 @@ vars:
   COMMIT_COUNT:
     sh: git rev-list HEAD --count
   VERSION: '{{ printf "%s.%s" .GIT_HASH .COMMIT_COUNT }}'
-  KDBX_BKUP_DIR: /Users/rt/Documents/RobertsFamily/backups/keepass/
 
 tasks:
   default:
@@ -18,6 +17,13 @@ tasks:
 
   cleanup:
     cmd: rm -rf ./tmp
+
+  generate-sample-config:
+    aliases:
+      - "gen"
+    cmds:
+      - |
+        bin/kpcli gen
 
   add-entry:
     silent: true
@@ -107,15 +113,15 @@ tasks:
       - |
         rm -f tmp.csv diff.log
 
-        recentFile=$(ls -tl /Users/rt/Documents/RobertsFamily/backups/keepass/ | awk 'NR==2 { print $9 }')
+        recentFile=$(ls -tl ${KDBX_BKUP_DIR} | awk 'NR==2 { print $9 }')
         echo "recentFile: ${recentFile}"
-        bin/kpcli --keyfile /Users/rt/Personal/password-databases/keepass-keys/RobertsFamily.key \
-            --database {{.KDBX_BKUP_DIR}}/${recentFile} \
+        bin/kpcli --keyfile ${KEYFILE} \
+            --database ${KDBX_BKUP_DIR}/${recentFile} \
             --pass $(pass RobertsFamily.kdbx) \
           ls -of csv --quite > database1.out
 
-        bin/kpcli --keyfile /Users/rt/Personal/password-databases/keepass-keys/RobertsFamily.key \
-            --database /Users/rt/syncWithCloud/googleDrive/keepass/RobertsFamily.kdbx \
+        bin/kpcli --keyfile ${KEYFILE} \
+            --database ${CURRENT_KDBX} \
             --pass $(pass RobertsFamily.kdbx) \
           ls -of csv --quite > database2.out
 
@@ -123,11 +129,21 @@ tasks:
         diffs=$(diff --suppress-common-lines -U0 database1.out database2.out) || true
         echo "${diffs}" | grep -v '\-\-\-' | tail -n +3 >> tmp.csv
 
-        csvtable --border <tmp.csv > diff.log
+        csvtable <tmp.csv > diff.log
         diffCount=$(grep -c . diff.log)
         if [[ "${diffCount}" -gt "4" ]]; then
           cat diff.log
         fi
+
+  diff2:
+    cmds:
+      - |
+        bin/kpcli \
+          --keyfile ./tmp/master-db.key \
+          --database ./tmp/master-db.kdbx.194552000 \
+          --pass "${KDBX_PASSWORD}" \
+          diff \
+            --database2 ./tmp/master-db.kdbx
 
   # release-check:
   #   desc: "check release tag"

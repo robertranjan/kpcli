@@ -9,20 +9,23 @@ import (
 	"time"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/robertranjan/kpcli/lib/models"
+	"github.com/robertranjan/kpcli/lib/utils"
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
-func (d *db) Unlock() error {
+func (d *kdbx) Unlock() error {
+	log.Debugf("options: %#v\n", d.Options)
 	file, err := os.Open(d.Options.Database)
 	if err != nil {
 		return fmt.Errorf("failed open database %q file: %v", d.Options.Database, err)
 	}
 
 	db := gokeepasslib.NewDatabase(gokeepasslib.WithDatabaseKDBXVersion4())
-	if err := d.generateCredentials(); err != nil {
+	if err := client.generateCredentials(); err != nil {
 		return err
 	}
-	db.Credentials = d.Credentials
+	db.Credentials = client.Credentials
 
 	if err := gokeepasslib.NewDecoder(file).Decode(db); err != nil {
 		log.Error("failed to decode dbfile: ", d.Options.Database, " err:", err)
@@ -40,7 +43,7 @@ func (d *db) Unlock() error {
 	return nil
 }
 
-func (d *db) FetchDBEntries() {
+func (d *kdbx) FetchDBEntries() {
 	for _, rootgp := range d.RawData.Content.Root.Groups {
 		for _, grp := range rootgp.Groups {
 			d.FetchGrpEntries(grp)
@@ -49,7 +52,7 @@ func (d *db) FetchDBEntries() {
 	}
 }
 
-func (d *db) FetchGrpEntries(grp gokeepasslib.Group) {
+func (d *kdbx) FetchGrpEntries(grp gokeepasslib.Group) {
 	for _, e := range grp.Entries {
 		kv := make(map[string]string)
 		for _, entry := range e.Values {
@@ -60,7 +63,7 @@ func (d *db) FetchGrpEntries(grp gokeepasslib.Group) {
 		if len(e.Histories) > 0 {
 			hist = len(e.Histories[0].Entries)
 		}
-		et := Interested{
+		et := models.Interested{
 			Title:     grp.Name + "/" + strings.TrimSpace(e.GetTitle()),
 			User:      strings.TrimSpace(e.GetContent("UserName")),
 			Pass:      e.GetPassword(),
@@ -77,7 +80,7 @@ func (d *db) FetchGrpEntries(grp gokeepasslib.Group) {
 	}
 }
 
-func (d *db) Display() {
+func (d *kdbx) Display() {
 
 	t := d.getTable()
 	t = d.updateTableWithSelectedEntries(t)
@@ -124,22 +127,22 @@ func (d *db) Display() {
 	}
 }
 
-func (d *db) List() error {
-	d.SelectedEntries = d.Entries
-	d.Display()
-	if d.Options.Quite {
+func (db *kdbx) List() error {
+	db.SelectedEntries = db.Entries
+	db.Display()
+	if db.Options.Quite {
 		return nil
 	}
 
-	if !d.Options.NoKey {
+	if !db.Options.NoKey {
 		fmt.Printf("%sThis command used: \n\tkeyfile: %s\n\tdatabase: %s\n",
-			colorGreen, d.Options.Key, d.Options.Database)
+			utils.ColorGreen, db.Options.Key, db.Options.Database)
 	} else {
 		fmt.Printf("%sThis command used: \n\tdatabase: %s\n",
-			colorGreen, d.Options.Database)
+			utils.ColorGreen, db.Options.Database)
 	}
 	fmt.Printf("\nShowing %v of %v total entries%s\n",
-		len(d.SelectedEntries), len(d.Entries), colorReset)
+		len(db.SelectedEntries), len(db.Entries), utils.ColorReset)
 	return nil
 }
 
@@ -162,9 +165,9 @@ func cacheFile(t table.Writer, cacheFilename string) {
 	// log.Printf("wrote cachefile: %v for options: %#v", d.Options.CacheFile, d.Options.String())
 }
 
-func (d *db) updateTableWithSelectedEntries(t table.Writer) table.Writer {
+func (d *kdbx) updateTableWithSelectedEntries(t table.Writer) table.Writer {
 	if d.Options.Days > 0 {
-		var newSelItems []Interested
+		var newSelItems []models.Interested
 		for _, ent := range d.SelectedEntries {
 			if ent.Created.After(time.Now().AddDate(0, 0, -1*d.Options.Days)) ||
 				ent.Modified.After(time.Now().AddDate(0, 0, -1*d.Options.Days)) {
@@ -195,7 +198,7 @@ func (d *db) updateTableWithSelectedEntries(t table.Writer) table.Writer {
 	return t
 }
 
-func (d *db) getTable() table.Writer {
+func (d *kdbx) getTable() table.Writer {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 
