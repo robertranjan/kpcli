@@ -63,9 +63,9 @@ syntax:
 eg: 1
 
     bin/kpcli \
-        --keyfile $(KDBX_KEYFILE) \
-        --database $(KDBX_DATABASE) \
-        --pass $(KDBX_PASSWORD) \
+        --keyfile ${KDBX_KEYFILE} \
+        --database ${KDBX_DATABASE} \
+        --pass ${KDBX_PASSWORD} \
         ls 
 
 eg: 2
@@ -78,9 +78,9 @@ eg: 2
 example
 
     bin/kpcli \
-        --keyfile $(KDBX_KEYFILE) \
-        --database $(KDBX_DATABASE) \
-        --pass $(KDBX_PASSWORD) \
+        --keyfile ${KDBX_KEYFILE} \
+        --database ${KDBX_DATABASE} \
+        --pass ${KDBX_PASSWORD} \
         diff \
             --database2 ${DATABASE_BACKUP}
 

@@ -93,6 +93,19 @@ tasks:
             -X github.com/robertranjan/${APPNAME}/version.Version={{.VERSION}}
             -X github.com/robertranjan/${APPNAME}/version.BuildDate={{.DATETIMESTAMP}}" \
           main.go
+        cp -f bin/{{.BIN}} /Users/rt/bin/kpcli
+
+  install:
+    deps:
+      - build
+    desc: "install go binary"
+    dir: "{{ default .USER_WORKING_DIR .WORK_DIR }}"
+    vars:
+      BIN: "{{default .APPNAME .BIN }}"
+    cmds:
+      - |
+        cp -f bin/{{.BIN}} /Users/rt/bin/kpcli
+        cp bin/{{.APPNAME}} ~/bin/.
 
   run:
     desc: "run a go project"
@@ -163,15 +176,6 @@ tasks:
   #         printf "     - merge PR on GitHub UI\n       git co main && git pull\n"
   #         printf "       git tag $(appVersionConfig) && git push origin --tags \n"
   #       endif
-
-  install:
-    desc: "install the binary to ~/go/bin"
-    deps:
-      - build
-    cmds:
-      - |
-        cp bin/{{.APPNAME}} ~/go/bin/.
-        cp bin/{{.APPNAME}} ~/bin/.
 
   annotate-gotrace:
     desc: "annotate go src files with gotrace to generate dot graph"

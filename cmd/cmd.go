@@ -180,9 +180,11 @@ func runGenerateSampleConfig(app *cli.Context) error {
 	InitGetLogger(app.String("log-level"))
 	if utils.IsFileExist("kpcli.toml") {
 		log.Info("found file, backing up existing file to tmp/")
-		backupFile("kpcli.toml")
+		if err := backupFile("kpcli.toml"); err != nil {
+			log.Info("failed to backup file kpcli.toml, ignoring error...")
+		}
 	}
-	fmt.Println("writing sample config file: kpcli.toml")
+	fmt.Println("(over)writing sample config file: kpcli.toml")
 	return os.WriteFile("kpcli.toml", []byte(config.SampleConfig), 0600)
 }
 
