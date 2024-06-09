@@ -45,15 +45,15 @@ func (d *kdbx) Unlock() error {
 
 func (d *kdbx) FetchDBEntries() {
 	for _, rootgp := range d.RawData.Content.Root.Groups {
-		for _, grp := range rootgp.Groups {
-			d.FetchGrpEntries(grp)
-		}
-		d.FetchGrpEntries(rootgp)
+		d.FetchGrpEntries(rootgp, "")
 	}
 }
 
-func (d *kdbx) FetchGrpEntries(grp gokeepasslib.Group) {
+func (d *kdbx) FetchGrpEntries(grp gokeepasslib.Group, parentPath string) {
 	for _, e := range grp.Entries {
+		// Construct the full title including the parent path
+		fullTitle := parentPath + "/" + strings.TrimSpace(e.GetTitle())
+
 		kv := make(map[string]string)
 		for _, entry := range e.Values {
 			kv[entry.Key] = entry.Value.Content
@@ -63,8 +63,10 @@ func (d *kdbx) FetchGrpEntries(grp gokeepasslib.Group) {
 		if len(e.Histories) > 0 {
 			hist = len(e.Histories[0].Entries)
 		}
+
+		// Create the Interested struct with the full title
 		et := models.Interested{
-			Title:     grp.Name + "/" + strings.TrimSpace(e.GetTitle()),
+			Title:     fullTitle,
 			User:      strings.TrimSpace(e.GetContent("UserName")),
 			Pass:      e.GetPassword(),
 			Tags:      e.Tags,
@@ -77,6 +79,10 @@ func (d *kdbx) FetchGrpEntries(grp gokeepasslib.Group) {
 			et.User = et.User[:lengthUser] + "..."
 		}
 		d.Entries = append(d.Entries, et)
+	}
+	// Recursively fetch entries from subgroups
+	for _, subgrp := range grp.Groups {
+		d.FetchGrpEntries(subgrp, parentPath+"/"+grp.Name)
 	}
 }
 
