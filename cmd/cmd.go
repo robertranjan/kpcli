@@ -91,13 +91,13 @@ Example:
 		--pass 'super_secret' \
 		--db ./tmp/master-db.kdbx \
 		create
-		
+
 	kpcli \
 		--nokey \
 		--pass 'super_secret' \
 		--db ./tmp/master-db.kdbx \
 		create
-		
+
 		`,
 
 	Action: runCreate,

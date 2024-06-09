@@ -158,6 +158,15 @@ tasks:
           diff \
             --database2 ./tmp/master-db.kdbx
 
+  github-release:
+    desc: "release a new version on github releases"
+    cmds:
+      - |
+        set -x
+        version=$(rg 'Version string' version/version.go | sed 's/.*=//' | cut -d'_' -f 1 | tr -d '"')
+        git tag --force ${version} && git push github --tags
+        # git tag --force ${version} && git push github --tags --force
+
   # release-check:
   #   desc: "check release tag"
   #   cmds:
