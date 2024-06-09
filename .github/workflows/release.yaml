@@ -34,15 +34,11 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v5
         with:
-          # Require: The version of golangci-lint to use.
-          # When `install-mode` is `binary` (default) the value can be v1.2 or v1.2.3 or `latest` to use the latest version.
-          # When `install-mode` is `goinstall` the value can be v1.2.3, `latest`, or the hash of a commit.
           version: v1.57
 
       - name: Build
         run: |
           export PATH=${PATH}:`go env GOPATH`/bin
-          # env
           echo ${{ github.sha }} > Release.txt
           GOOS=darwin GOARCH=arm64 go build -v -o bin/kpcli_darwin_arm64.bin
           GOOS=darwin GOARCH=amd64 go build -v -o bin/kpcli_darwin_amd64.bin
@@ -56,32 +52,32 @@ jobs:
           go test -v ./...
           cat Release.txt
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4 # Updated to v4
         name: Publish
         with:
           name: kpcli_darwin_arm64.bin
           path: bin/kpcli_darwin_arm64.bin
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4 # Updated to v4
         name: Publish
         with:
           name: kpcli_darwin_amd64.bin
           path: bin/kpcli_darwin_amd64.bin
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4 # Updated to v4
         name: Publish
         with:
           name: kpcli_windows_amd64.exe
           path: bin/kpcli_windows_amd64.exe
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4 # Updated to v4
         name: Publish
         with:
           name: kpcli_linux_amd64.bin
           path: bin/kpcli_linux_amd64.bin
 
       - name: Release with Notes
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v1 # Update version to v1
         with:
           files: |
             bin/kpcli_darwin_arm64.bin
