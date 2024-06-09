@@ -25,12 +25,12 @@ jobs:
         with:
           lfs: true
 
-      # - name: Restore Cache
-      #   uses: actions/cache@v3
-      #   id: cache
-      #   with:
-      #     path: ~/go/pkg
-      #     key: 1.22-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+      - name: Restore Cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: ~/go/pkg
+          key: 1.22-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
 
       - name: Get dependencies
         run: |
