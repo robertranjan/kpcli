@@ -14,15 +14,15 @@ jobs:
   build-test-staticcheck:
     name: Build, Test and Check
     runs-on: ubuntu-latest
-    steps:
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20.x
+    strategy:
+      matrix:
+        go-version: ["1.20", "1.21.x", "1.22.x"]
 
-      - uses: actions/setup-go@v5
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: ${{ matrix.go-version }}
         id: go
 
       - name: Check out code into the Go module directory
@@ -30,12 +30,12 @@ jobs:
         with:
           lfs: true
 
-      - name: Restore Cache
-        uses: actions/cache@v3
-        id: cache
-        with:
-          path: ~/go/pkg
-          key: 1.22-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+      # - name: Restore Cache
+      #   uses: actions/cache@v3
+      #   id: cache
+      #   with:
+      #     path: ~/go/pkg
+      #     key: 1.22-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
 
       - name: Get dependencies
         run: |
